@@ -1,5 +1,5 @@
 // Oenograph service worker: offline use + local bottle photos.
-const V='oeno-v3',CORE=['./','./index.html','./standalone.js','./manifest.webmanifest','./fonts/italiana.woff2','./icon-oe-192.png','./icon-oe-512.png','./touch-oe.png'];
+const V='oeno-v4',CORE=['./','./index.html','./standalone.js','./manifest.webmanifest','./fonts/italiana.woff2','./icon-oe-192.png','./icon-oe-512.png','./touch-oe.png'];
 const idbGet=id=>new Promise((ok,no)=>{const r=indexedDB.open('oeno-photos',1);r.onupgradeneeded=()=>r.result.createObjectStore('p',{keyPath:'id'});
   r.onsuccess=()=>{const d=r.result,q=d.transaction('p').objectStore('p').get(id);q.onsuccess=()=>{d.close();ok(q.result)};q.onerror=()=>{d.close();no(q.error)}};r.onerror=()=>no(r.error)});
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
@@ -14,7 +14,7 @@ self.addEventListener('fetch',e=>{
   }
   // Network first, so updates arrive as soon as you're online; cache when offline.
   e.respondWith(
-    Promise.race([fetch(e.request),new Promise((_,no)=>setTimeout(no,4500))])
+    Promise.race([fetch(e.request,{cache:'no-cache'}),new Promise((_,no)=>setTimeout(no,4500))])
       .then(r=>{if(r&&r.ok){const c=r.clone();caches.open(V).then(x=>x.put(e.request,c))}return r})
       .catch(()=>caches.match(e.request,{ignoreSearch:true}).then(r=>r||caches.match('./index.html')))
   );
