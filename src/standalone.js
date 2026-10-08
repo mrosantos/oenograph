@@ -54,8 +54,9 @@ const OENO=window.OENO={
   clearKey(){LS.del('oenoKey');location.reload()},
   async signOut(){
     try{if(auth)await signOut(auth)}catch(e){}
-    DATA_KEYS.concat(['oenoUid','oenoLocal']).forEach(LS.del);
-    try{await photoClear()}catch(e){}
+    // Keep the local copy so nothing is lost if the cloud copy was never saved.
+    // It is only cleared when a different account signs in.
+    LS.del('oenoLocal');
     location.reload()
   },
   goLogin(){LS.del('oenoLocal');location.reload()}
