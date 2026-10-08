@@ -1,0 +1,25 @@
+{
+  "name": "oenograph",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrosantos/oenograph.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mrosantos/oenograph/issues"
+  },
+  "homepage": "https://github.com/mrosantos/oenograph#readme",
+  "dependencies": {
+    "@fontsource/italiana": "^5.3.0",
+    "esbuild": "^0.28.2",
+    "firebase": "^13.0.0"
+  }
+}
