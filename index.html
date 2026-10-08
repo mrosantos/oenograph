@@ -655,6 +655,7 @@ addEventListener('resize',setNH);addEventListener('load',()=>{setNH();setTimeout
  document.addEventListener('touchend',()=>{if(!on)return;on=false;const ok=dx>=90;reset();if(ok)selC('')},{passive:true});
  document.addEventListener('touchcancel',()=>{if(on){on=false;reset()}},{passive:true});
 })();
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.sw.open,.sw.openL'))closeRows()},true);
 function bind(){document.querySelectorAll('.sw').forEach(w=>{
  const c=w.querySelector('.card'),b=w.dataset.wish?WL.find(x=>x.id==w.dataset.id):w.dataset.log?C.find(x=>x.id==w.dataset.id):B.find(x=>x.id==w.dataset.id),SB=b=>w.dataset.wish?wishBuy(b.id):startC(b),dl=w.querySelector('.del');let x0,dx,base,drag=false,moved=false;
  const cls=()=>{w.classList.remove('open','openL','dragL');c.style.transform=''};
@@ -668,11 +669,12 @@ function bind(){document.querySelectorAll('.sw').forEach(w=>{
  c.onpointerup=()=>{if(!drag)return;drag=false;c.style.transition='';w.classList.remove('drag');
   if(!moved){if(base)cls();else if(w.dataset.wish)wishAct(b.id);else if(w.dataset.log)openLogEdit(b.id);else openW(b);return}
   settle()};
- let wd=0,wt=0,wOn=false;
+ let wd=0,wt=0,wOn=false,arm=0;
  c.addEventListener('wheel',e=>{if(!wOn&&Math.abs(e.deltaX)<=Math.abs(e.deltaY)*1.2)return;e.preventDefault();
-  if(!wOn){wOn=true;closeRows(w);base=st();wd=0;dx=base;c.style.transition='none';w.classList.add('drag')}
-  wd+=e.deltaX*.6;dx=Math.max(w.dataset.log?0:-96,Math.min(dl?96:0,base-wd));w.classList.toggle('dragL',dx>6);c.style.transform=`translateX(${dx}px)`;
-  clearTimeout(wt);wt=setTimeout(()=>{wOn=false;c.style.transition='';w.classList.remove('drag');settle()},150)},{passive:false});
+  if(!wOn){wOn=true;arm=0;closeRows(w);base=st();wd=0;dx=base}
+  wd+=e.deltaX*.6;if(!arm){if(Math.abs(wd)<10){clearTimeout(wt);wt=setTimeout(()=>{wOn=false},150);return}arm=wd>0?10:-10;c.style.transition='none';w.classList.add('drag')}
+  dx=Math.max(w.dataset.log?0:-96,Math.min(dl?96:0,base-(wd-arm)));w.classList.toggle('dragL',dx>6);c.style.transform=`translateX(${dx}px)`;
+  clearTimeout(wt);wt=setTimeout(()=>{wOn=false;c.style.transition='';w.classList.remove('drag');if(arm)settle()},150)},{passive:false});
 })}
 let CG={};try{CG=JSON.parse(localStorage.getItem('oenoG')||'{}')||{}}catch(e){}
 const CHEV='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
