@@ -1461,6 +1461,14 @@ $('#sheet').onclick=e=>{if(e.target.id=='sheet')sh(false)};
 (()=>{let ly=0;
  document.addEventListener('click',e=>{const p=$('#vpop');if(p&&!e.composedPath().includes(p)&&e.target.id!='vb')popOut(p)})})();
 load();render();
+let pulling=0;
+async function pullCloud(){if(!ref||pulling||!ready||addOpen||infoOpen||editing||/^Not/.test(sync)||!['cellar','drink','log','map'].includes(tab))return;pulling=1;
+ try{const s=await ref.get();if(!s.exists)return;const d=s.data(),mine=JSON.stringify({bottles:B,consumed:C,deleted:DEL,places:PL,wishlist:WL}),theirs=JSON.stringify({bottles:cl(d.bottles),consumed:cl(d.consumed),deleted:cl(d.deleted),places:cl(d.places),wishlist:cl(d.wishlist)});
+  if(mine===theirs)return;
+  B=cl(d.bottles);C=cl(d.consumed);picks=(d.picks&&d.picks.length)?cl(d.picks):null;xcur=cl(d.xcur);RI=d.rinfo?JSON.parse(JSON.stringify(d.rinfo)):{};DEL=cl(d.deleted);PL=cl(d.places);WL=cl(d.wishlist);fix();
+  try{localStorage.setItem('oeno',JSON.stringify(B));localStorage.setItem('oenoC',JSON.stringify(C));localStorage.setItem('oenoP',JSON.stringify(picks));localStorage.setItem('oenoX',JSON.stringify(xcur));localStorage.setItem('oenoI',JSON.stringify(RI));localStorage.setItem('oenoD',JSON.stringify(DEL));localStorage.setItem('oenoL',JSON.stringify(PL));localStorage.setItem('oenoW',JSON.stringify(WL))}catch(e){}
+  render();pill('Updated from your account')}catch(e){}finally{pulling=0}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(pullCloud,500)});addEventListener('online',()=>setTimeout(pullCloud,1200));setInterval(()=>{if(!document.hidden)pullCloud()},45000);
 const photoSyncAll=async c=>{const ids=[...new Set([...B,...C,...DEL,...WL].map(x=>x&&x.photoId).filter(Boolean))];if(c.pullPhotos){const n=await c.pullPhotos(ids);if(n)render()}if(c.pushPhotos)c.pushPhotos(ids)};
 function acctOut(){if(confirm('Sign out? Your cellar stays safe in your account, but it will be removed from this device until you sign in again.'))OENO.signOut()}
 function keyOut(){if(confirm('Remove your Claude key from this device?'))OENO.clearKey()}
