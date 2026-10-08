@@ -193,8 +193,8 @@ function injectStyle(){
   html.gate #app{visibility:hidden}
   #gate{position:fixed;inset:0;z-index:99999;background:var(--bg,#faf8f5);color:var(--fg,#1f1b18);display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto;font:16px/1.4 -apple-system,system-ui,"Segoe UI",sans-serif}
   #gate .gc{width:100%;max-width:340px;text-align:center}
-  #gate h1{font:400 46px/1 Italiana,Georgia,serif;margin:0 0 6px;letter-spacing:.5px}
-  #gate h1 span{color:var(--acc,#7a2e3b)}
+  #gate h1{font:400 46px/1.1 Italiana,Georgia,serif;margin:0 0 6px;letter-spacing:.6px}
+  #gate h1 .oo{letter-spacing:-.11em}
   #gate p{margin:0 0 22px;color:var(--mut,#8a817a);font-size:15px}
   #gate input{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:13px 14px;margin:0 0 10px;border:1px solid var(--line,#e8e2db);border-radius:12px;background:var(--card,#fff);color:inherit;outline:none;-webkit-appearance:none}
   #gate input:focus{border-color:var(--acc,#7a2e3b)}
@@ -226,7 +226,7 @@ function showGate(){
     const g=document.createElement('div');g.id='gate';
     let mode='in';
     const draw=()=>{
-      g.innerHTML=`<div class="gc"><h1><span>o</span>enograph</h1>
+      g.innerHTML=`<div class="gc"><h1><span class="oo">o</span>enograph</h1>
       <p>${mode==='in'?'Sign in to open your cellar on any device.':'Create an account to keep your cellar safe and in sync.'}</p>
       <form id="gf" novalidate>
         <input id="ge" type="email" inputmode="email" autocomplete="email" autocapitalize="none" autocorrect="off" placeholder="Email" aria-label="Email">

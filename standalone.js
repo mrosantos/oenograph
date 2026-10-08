@@ -39,8 +39,8 @@ This typically indicates that your device does not have a healthy Internet conne
   html.gate #app{visibility:hidden}
   #gate{position:fixed;inset:0;z-index:99999;background:var(--bg,#faf8f5);color:var(--fg,#1f1b18);display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto;font:16px/1.4 -apple-system,system-ui,"Segoe UI",sans-serif}
   #gate .gc{width:100%;max-width:340px;text-align:center}
-  #gate h1{font:400 46px/1 Italiana,Georgia,serif;margin:0 0 6px;letter-spacing:.5px}
-  #gate h1 span{color:var(--acc,#7a2e3b)}
+  #gate h1{font:400 46px/1.1 Italiana,Georgia,serif;margin:0 0 6px;letter-spacing:.6px}
+  #gate h1 .oo{letter-spacing:-.11em}
   #gate p{margin:0 0 22px;color:var(--mut,#8a817a);font-size:15px}
   #gate input{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:13px 14px;margin:0 0 10px;border:1px solid var(--line,#e8e2db);border-radius:12px;background:var(--card,#fff);color:inherit;outline:none;-webkit-appearance:none}
   #gate input:focus{border-color:var(--acc,#7a2e3b)}
@@ -52,7 +52,7 @@ This typically indicates that your device does not have a healthy Internet conne
   #gate .err{min-height:20px;margin:2px 0 8px;color:#b3261e;font-size:14px}
   #gate .ok{color:var(--acc,#7a2e3b)}
   #gate .row{display:flex;justify-content:space-between;align-items:center}
-  @media (prefers-color-scheme:dark){#gate .err{color:#ff8a80}}`,document.head.appendChild(r)}var $D={"auth/invalid-credential":"That email or password isn\u2019t right.","auth/wrong-password":"That email or password isn\u2019t right.","auth/user-not-found":"That email or password isn\u2019t right.","auth/invalid-email":"That email address doesn\u2019t look right.","auth/email-already-in-use":"An account with that email already exists. Try signing in.","auth/weak-password":"Please use at least 6 characters.","auth/network-request-failed":"Can\u2019t reach the server. Check your connection.","auth/too-many-requests":"Too many attempts. Wait a moment and try again.","auth/missing-password":"Please enter your password."};function nR(){return new Promise(r=>{tR();let e=document.createElement("div");e.id="gate";let t="in",n=()=>{e.innerHTML=`<div class="gc"><h1><span>o</span>enograph</h1>
+  @media (prefers-color-scheme:dark){#gate .err{color:#ff8a80}}`,document.head.appendChild(r)}var $D={"auth/invalid-credential":"That email or password isn\u2019t right.","auth/wrong-password":"That email or password isn\u2019t right.","auth/user-not-found":"That email or password isn\u2019t right.","auth/invalid-email":"That email address doesn\u2019t look right.","auth/email-already-in-use":"An account with that email already exists. Try signing in.","auth/weak-password":"Please use at least 6 characters.","auth/network-request-failed":"Can\u2019t reach the server. Check your connection.","auth/too-many-requests":"Too many attempts. Wait a moment and try again.","auth/missing-password":"Please enter your password."};function nR(){return new Promise(r=>{tR();let e=document.createElement("div");e.id="gate";let t="in",n=()=>{e.innerHTML=`<div class="gc"><h1><span class="oo">o</span>enograph</h1>
       <p>${t==="in"?"Sign in to open your cellar on any device.":"Create an account to keep your cellar safe and in sync."}</p>
       <form id="gf" novalidate>
         <input id="ge" type="email" inputmode="email" autocomplete="email" autocapitalize="none" autocorrect="off" placeholder="Email" aria-label="Email">
