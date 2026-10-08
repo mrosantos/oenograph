@@ -448,17 +448,15 @@ body.lotkb #app{padding-bottom:calc(var(--lkp,340px) + 60px)!important}
  .sw{overflow:visible}
  .sw .card{height:100%;box-sizing:border-box;transition:transform .2s,box-shadow .2s,border-color .2s}
  .sw:hover .card{border-color:color-mix(in srgb,var(--acc) 35%,var(--line));box-shadow:0 6px 22px rgba(0,0,0,.08)}
- .dx{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-size:calc(13px*var(--ts));color:var(--mut)}
+ .sw:not([data-log]):not([data-wish]) .card{display:flex;flex-direction:column}
+ .sw:not([data-log]):not([data-wish]) .card>:nth-last-child(2){margin-bottom:10px}
+ .dx{display:block;margin-top:auto;padding-top:9px;border-top:1px solid var(--line);font-size:calc(13px*var(--ts));color:var(--mut)}
+ .dx1{display:flex;align-items:center;gap:6px 12px;white-space:nowrap;overflow:hidden;min-height:24px}
+ .dx2{display:flex;align-items:center;gap:6px;min-height:20px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .dx2 i{font-style:normal;opacity:.6}
  .dx .wb{margin:0}
  .dxt{display:inline-flex;align-items:center;gap:6px;color:var(--fg)}
  .dxt i{width:10px;height:10px;border-radius:50%;display:inline-block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
- /* hover actions instead of swiping */
- .sw .act,.sw .del{visibility:visible;opacity:0;pointer-events:none;position:absolute;top:auto;bottom:10px;left:auto;width:34px;height:34px;padding:0;border-radius:50%;background:var(--glass2);border:1px solid var(--gb);box-shadow:0 2px 8px rgba(0,0,0,.12);color:var(--acc);display:flex;align-items:center;justify-content:center;z-index:3;transition:opacity .15s,transform .15s}
- .sw .act{right:12px}.sw .del{right:54px;color:#c0392b}
- .sw .act svg{width:18px;height:18px}.sw .del svg{width:17px;height:17px}
- .sw:hover .act,.sw:hover .del,.sw:focus-within .act,.sw:focus-within .del{opacity:1;pointer-events:auto}
- .sw .act:hover,.sw .del:hover{transform:scale(1.1)}
- .sw.open,.sw.drag,.sw.openL,.sw.dragL,.sw.dying{background:none}
  /* map: map + stats on the left, lists on the right */
  .mapw{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(340px,1fr);grid-template-rows:auto 1fr;column-gap:24px;height:calc(100vh - 92px);align-items:start}
  .mapw>.seg{grid-column:1;grid-row:1}
@@ -467,6 +465,19 @@ body.lotkb #app{padding-bottom:calc(var(--lkp,340px) + 60px)!important}
  #app.mapmode{max-width:1500px}
  .btt{display:none!important}
  #info .ic,#info2 .ic{max-width:720px}
+}
+
+/* Mouse / trackpad: Drink and Delete appear on hover instead of swiping */
+@media (hover:hover) and (pointer:fine){
+ .sw{overflow:visible}
+ .sw .act,.sw .del{visibility:visible;opacity:0;pointer-events:none;position:absolute;top:auto;bottom:10px;left:auto;width:34px;height:34px;padding:0;border-radius:50%;background:var(--glass2);border:1px solid var(--gb);box-shadow:0 2px 8px rgba(0,0,0,.12);color:var(--acc);display:flex;align-items:center;justify-content:center;z-index:3;transition:opacity .15s,transform .15s}
+ .sw .act{right:12px}.sw .del{right:54px;color:#c0392b}
+ .sw .act svg{width:18px;height:18px}.sw .del svg{width:17px;height:17px}
+ .sw:hover .act,.sw:hover .del,.sw:focus-within .act,.sw:focus-within .del{opacity:1;pointer-events:auto}
+ .sw .act:hover,.sw .del:hover{transform:scale(1.1)}
+ .sw.open,.sw.drag,.sw.openL,.sw.dragL,.sw.dying{background:none}
+ .sw[data-log] .del{bottom:auto;top:10px;right:62px}
+ .sw .card{touch-action:auto}
 }
 </style></head><body><main id="app"></main>
 <nav><button data-t="cellar"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5h4v4.2c0 1.3 1.7 2.3 1.7 4.4V21a1 1 0 0 1-1 1H9.3a1 1 0 0 1-1-1V11.1c0-2.1 1.7-3.1 1.7-4.4z"/><path d="M8.3 15h7.4"/></svg><span>Cellar</span></button><button data-t="drink"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10c0 5-1.6 8-5 8S7 8 7 3z"/><path d="M12 11v9M8.5 21h7"/></svg><span>Drink</span></button><button data-t="log"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v16H5z"/><path d="M8.5 9h7M8.5 13h7M8.5 17h4"/></svg><span>Log</span></button><button data-t="map"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v1.6M12 19.4V21M3 12h1.6M19.4 12H21"/><path d="M15.8 8.2 13.13 13.13 8.2 15.8 10.87 10.87z"/><path d="M15.8 8.2 13.13 13.13 10.87 10.87z" fill="currentColor"/></svg><span>Map</span></button></nav>
@@ -662,13 +673,13 @@ if(window.visualViewport){const f=()=>document.querySelectorAll('#info.kb,#info2
 const wbk=b=>{const f=ok(b.from),t=ok(b.to);if(!f&&!t)return 9;if(t&&t<Y)return 0;if(f>Y){const d=f-Y;return d<=2?3:d<=5?4:5}return t&&t<=Y+1?1:2};
 const wbadge=b=>{const k=wbk(b),f=ok(b.from);const m={0:['pk','Past peak'],1:['sn','Drink soon'],2:['rd','Ready now'],3:['ho','Ready '+f]}[k];return m?`<div><span class="wb ${m[0]}">${m[1]}</span></div>`:''};
 const TYC={Red:'#7a2433',White:'#d9c46b',Rosé:'#e49aa8',Rose:'#e49aa8',Sparkling:'#c9b97a',Orange:'#d98a3d',Dessert:'#b8862e',Fortified:'#6b3b2a'};
-function dxRow(b,nw){try{const k=wbk(b),f=ok(b.from),t=ok(b.to),m={0:['pk','Past peak'],1:['sn','Drink soon'],2:['rd','Ready now'],3:['ho','Ready '+f],4:['ho','Ready '+f],5:['ho','Ready '+f]}[k],l=b.locs&&b.locs[0],pr=unit(b),bits=[];
- if(b.type)bits.push(`<span class="dxt"><i style="background:${TYC[b.type]||'var(--mut)'}"></i>${esc(b.type)}</span>`);
- if(m)bits.push(`<span class="wb ${m[0]}">${m[1]}</span>`);
- if((f||t)&&!nw)bits.push(`<span>${f&&t?f+'–'+t:f?'from '+f:'by '+t}</span>`);
- if(pr>0&&!PF.hideCost)bits.push(`<span>$${fmt(pr)}</span>`);
- if(l&&l.p)bits.push(`<span>${esc(l.p+(l.d?' · '+l.d:''))}</span>`);
- return bits.length?`<div class="dx">${bits.join('')}</div>`:''}catch(e){return ''}}
+function dxRow(b,nw){try{const k=wbk(b),f=ok(b.from),t=ok(b.to),m={0:['pk','Past peak'],1:['sn','Drink soon'],2:['rd','Ready now'],3:['ho','Ready '+f],4:['ho','Ready '+f],5:['ho','Ready '+f]}[k],l=b.locs&&b.locs[0],pr=unit(b),a=[],c=[];
+ if(b.type)a.push(`<span class="dxt"><i style="background:${TYC[b.type]||'var(--mut)'}"></i>${esc(b.type)}</span>`);
+ if(m)a.push(`<span class="wb ${m[0]}">${m[1]}</span>`);
+ if((f||t)&&!nw)a.push(`<span>${f&&t?f+'–'+t:f?'from '+f:'by '+t}</span>`);
+ if(pr>0&&!PF.hideCost)c.push(`<span>$${fmt(pr)}</span>`);
+ if(l&&l.p)c.push(`<span>${esc(l.p+(l.d?' · '+l.d:''))}</span>`);
+ return `<div class="dx"><div class="dx1">${a.join('')}</div><div class="dx2">${c.join('<i>·</i>')}</div></div>`}catch(e){return ''}}
 function card(b,x='',dl=false){return `<div class="sw" data-id="${b.id}">${dl?`<button class="del" aria-label="Delete wine">${TRASH}</button>`:''}<button class="act" aria-label="Drink"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10c0 5-1.6 8-5 8S7 8 7 3z"/><path d="M12 11v9M8.5 21h7"/></svg></button><div class="card"><div class="row"><span><b>${wn(b)}</b>${b.wine&&b.producer?`<br>${esc(b.producer)}`:''}</span><span class="m" style="text-align:right;white-space:nowrap;flex:none">${b.vintage||'NV'}${b.qty>1?'<br>×'+b.qty:''}</span></div><div class="m">${orig(b)}${b.grapes?' · '+esc(b.grapes):''}</div>${x}${dxRow(b,!!x)}</div></div>`}
 function cuts(n){const w=Array.from({length:n},()=>.4+Math.random()*1.4),t=w.reduce((a,b)=>a+b,0);let a=0;return[0,...w.map(x=>(a+=x/t*100))]}
 const jt=()=>(Math.random()-.5)*1.8;
@@ -711,13 +722,14 @@ addEventListener('resize',setNH);addEventListener('load',()=>{setNH();setTimeout
  document.addEventListener('touchcancel',()=>{if(on){on=false;reset()}},{passive:true});
 })();
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.sw.open,.sw.openL'))closeRows()},true);
+const HV=matchMedia('(hover:hover) and (pointer:fine)');
 function bind(){document.querySelectorAll('.sw').forEach(w=>{
  const c=w.querySelector('.card'),b=w.dataset.wish?WL.find(x=>x.id==w.dataset.id):w.dataset.log?C.find(x=>x.id==w.dataset.id):B.find(x=>x.id==w.dataset.id),SB=b=>w.dataset.wish?wishBuy(b.id):startC(b),dl=w.querySelector('.del');let x0,dx,base,drag=false,moved=false;
  const cls=()=>{w.classList.remove('open','openL','dragL');c.style.transform=''};
  const st=()=>w.classList.contains('open')?-88:w.classList.contains('openL')?88:0;
  const act=w.querySelector('.act');if(act)act.onclick=()=>SB(b);if(dl)dl.onclick=()=>delCard(w,b);
  c.onpointerdown=e=>{if(e.target.closest('.hrt')){drag=false;return}closeRows(w);x0=e.clientX;base=st();dx=base;drag=true;moved=false;c.style.transition='none'};
- c.onpointermove=e=>{if(!drag)return;const d=e.clientX-x0;if(!moved&&Math.abs(d)>8){moved=true;w.classList.add('drag');c.setPointerCapture(e.pointerId)}if(!moved)return;dx=Math.max(w.dataset.log?0:-w.offsetWidth,Math.min(dl?w.offsetWidth:0,base+d));w.classList.toggle('dragL',dx>0);c.style.transform=`translateX(${dx}px)`};
+ c.onpointermove=e=>{if(!drag)return;if(HV.matches){if(Math.abs(e.clientX-x0)>8)moved=true;return}const d=e.clientX-x0;if(!moved&&Math.abs(d)>8){moved=true;w.classList.add('drag');c.setPointerCapture(e.pointerId)}if(!moved)return;dx=Math.max(w.dataset.log?0:-w.offsetWidth,Math.min(dl?w.offsetWidth:0,base+d));w.classList.toggle('dragL',dx>0);c.style.transform=`translateX(${dx}px)`};
  c.onpointercancel=()=>{drag=false;c.style.transition='';w.classList.remove('drag')};
  const settle=()=>{if(dl&&dx>w.offsetWidth*.6){delCard(w,b,true);return}
   if(dx<-w.offsetWidth*.6)SB(b);else if(dx<-44){w.classList.remove('openL','dragL');w.classList.add('open');c.style.transform='translateX(-88px)'}else if(dx>44){w.classList.remove('open');w.classList.add('openL');c.style.transform='translateX(88px)'}else cls()};
@@ -725,7 +737,7 @@ function bind(){document.querySelectorAll('.sw').forEach(w=>{
   if(!moved){if(base)cls();else if(w.dataset.wish)wishAct(b.id);else if(w.dataset.log)openLogEdit(b.id);else openW(b);return}
   settle()};
  let wd=0,wt=0,wOn=false,arm=0;
- c.addEventListener('wheel',e=>{if(!wOn&&Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();
+ c.addEventListener('wheel',e=>{if(HV.matches||(!wOn&&Math.abs(e.deltaX)<=Math.abs(e.deltaY)))return;e.preventDefault();
   if(!wOn){wOn=true;arm=0;closeRows(w);base=st();wd=0;dx=base}
   wd+=e.deltaX*.85;if(!arm){if(Math.abs(wd)<8){clearTimeout(wt);wt=setTimeout(()=>{wOn=false},150);return}arm=wd>0?8:-8;c.style.transition='none';w.classList.add('drag')}
   dx=Math.max(w.dataset.log?0:-96,Math.min(dl?96:0,base-(wd-arm)));w.classList.toggle('dragL',dx>6);c.style.transform=`translateX(${dx}px)`;
@@ -1433,10 +1445,14 @@ function loadXLSX(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{c
 async function xlsRows(f){await loadXLSX();const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});let best=null,bs=-1;wb.SheetNames.forEach(n=>{const R=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:''}),s=Math.max(0,...R.slice(0,12).map(r=>r.filter(c=>KNOWN.has(NK(c))).length));if(s>bs||(s==bs&&R.length>(best||[]).length)){bs=s;best=R}});return best||[]}
 const iso=x=>{x=String(x||'').trim();if(!x)return'';let m=x.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){let y=+m[3];if(y<100)y+=y<50?2000:1900;return y+'-'+String(+m[1]).padStart(2,'0')+'-'+String(+m[2]).padStart(2,'0')}const d=new Date(x);return isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const CTP=(()=>{try{return JSON.parse(localStorage.getItem('oenoCT')||'{}')}catch(e){return{}}})();
+const CTS=(()=>{try{return JSON.parse(localStorage.getItem('oenoCS')||'{}')}catch(e){return{}}})();let PURK={};
+const pickBuy=(L,pr)=>{if(!L||!L.length)return null;const q=L.filter(x=>pr>0&&+x.price===pr);const A=(q.length?q:L).slice().sort((a,b)=>String(a.pdate||'9').localeCompare(String(b.pdate||'9')));return A[0]};
+function enrichLog(){let n=0;C.forEach(e=>{if(e.src!=='cellar'||(e.lot&&e.lot.store))return;const k=[e.producer,e.wine,e.vintage].join('|').toLowerCase(),b=pickBuy(PURK[k],e.lot&&+e.lot.price);if(!b||!b.store)return;e.lot=Object.assign({},e.lot||{},{price:(e.lot&&e.lot.price)||b.price||'',cur:(e.lot&&e.lot.cur)||b.cur||'USD',usd:(e.lot&&e.lot.usd)||'',store:b.store,pdate:b.pdate||''});n++});return n}
 const normType=t=>{t=String(t||'').trim();if(/sparkling/i.test(t))return'Sparkling';if(/sweet|dessert/i.test(t))return'Sweet';if(/fortified/i.test(t))return'Fortified';if(/fruit|vegetable/i.test(t))return'';return t};
 function tabular(R){R=R.filter(r=>r.some(c=>String(c).trim()));const hi=R.slice(0,15).findIndex(r=>r.filter(c=>KNOWN.has(NK(c))).length>=2);if(hi<0)return null;
  const H=R[hi].map(NK),M=new Map(),col=f=>{for(const a of HAL[f]){const i=H.indexOf(a);if(i>=0)return i}return-1},ix={};Object.keys(HAL).forEach(f=>ix[f]=col(f));
  const g=(r,k)=>ix[k]<0?'':String(r[ix[k]]==null?'':r[ix[k]]).trim();
+ if(ix.store>=0){Object.keys(CTS).forEach(k=>delete CTS[k]);PURK={};R.slice(hi+1).forEach(r=>{const p=g(r,'producer');let w=g(r,'wine').replace(/^\d{4}\s+/,'');if(p&&w.toLowerCase().startsWith(p.toLowerCase()))w=w.slice(p.length).trim();const v=+g(r,'vintage'),pr=parseFloat(g(r,'price').replace(/[^0-9.]/g,'')),b={price:pr||'',cur:(g(r,'currency')||'USD').toUpperCase().slice(0,3),store:g(r,'store'),pdate:iso(g(r,'purchasedate'))},iw=g(r,'iwine');if(iw)(CTS[iw]=CTS[iw]||[]).push(b);const k=[p,w,v>1500?v:''].join('|').toLowerCase();(PURK[k]=PURK[k]||[]).push(b)});try{localStorage.setItem('oenoCS',JSON.stringify(CTS))}catch(e){}}
  R.slice(hi+1).forEach(r=>{const p=g(r,'producer');if(p&&g(r,'iwine'))CTP[g(r,'iwine')]=p;if(ix.remaining>=0&&!(+g(r,'remaining')>0))return;let w=g(r,'wine').replace(/^\d{4}\s+/,'');if(p&&w.toLowerCase().startsWith(p.toLowerCase()))w=w.slice(p.length).trim();const v=+g(r,'vintage');if(!p&&!w)return;
   const n=(ix.remaining>=0?+g(r,'remaining'):+g(r,'quantity'))||1,pr=parseFloat(g(r,'price').replace(/[^0-9.]/g,'')),lot={id:'l'+Math.random().toString(36).slice(2,7),qty:n,price:pr||'',cur:(g(r,'currency')||'USD').toUpperCase().slice(0,3),usd:'',pdate:iso(g(r,'purchasedate')),store:g(r,'store')},
   key=g(r,'iwine')||[p,w,v].join('|').toLowerCase(),pl=g(r,'location'),bn=g(r,'bin');const addL=x=>{if(!pl)return;x.locs=x.locs||[];const m=x.locs.find(l=>l.p===pl&&l.d===bn);if(m)m.q+=n;else x.locs.push({p:pl,d:bn,q:n})};
@@ -1454,7 +1470,7 @@ function tabularLog(R){R=R.filter(r=>r.some(c=>String(c).trim()));const hi=R.sli
   else{p=w;w=''}
   if(!p&&!w)return;const v=+g(r,'vintage'),pr=parseFloat(g(r,'price').replace(/[^0-9.]/g,'')),dt=iso(g(r,'consumed')),shown=!/tasted|restaurant/i.test(g(r,'shorttype'));
   const e={id:Date.now()+'i'+k,src:shown?'cellar':'tasted',photoId:'',producer:p,wine:w,vintage:v>1500?v:'',type:normType(g(r,'type')),country:g(r,'country'),region:g(r,'region'),grapes:g(r,'varietal'),date:dt,where:g(r,'cnote'),rating:'',fav:false,notes:''};
-  if(pr>0&&e.src==='cellar')e.lot={price:pr,cur:'USD',usd:'',store:'',pdate:''};out.push(e)});
+  if(e.src==='cellar'){const b=pickBuy(CTS[g(r,'iwine')],pr);if(b)e.lot={price:pr>0?pr:(b.price||''),cur:b.cur||'USD',usd:'',store:b.store||'',pdate:b.pdate||''};else if(pr>0)e.lot={price:pr,cur:'USD',usd:'',store:'',pdate:''}}out.push(e)});
  return out}
 async function blobData(id){try{const r=await fetch('_blob/'+id);if(r.ok){const b=await r.blob();return await new Promise(ok=>{const fr=new FileReader();fr.onload=()=>ok(fr.result);fr.onerror=()=>ok(null);fr.readAsDataURL(b)})}}catch(e){}
  try{const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src='_blob/'+id}),c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;c.getContext('2d').drawImage(im,0,0);return c.toDataURL('image/png')}catch(e){return null}}
@@ -1487,14 +1503,14 @@ async function imp(f){const nm=(f.name||'').toLowerCase(),u=new Uint8Array(await
  if(isJ)return impJSON(f);
  let R;try{if(isX){toast('Reading spreadsheet…',30000);R=await xlsRows(f)}else R=csv(await dec(f))}catch(e){toast(isX?'Couldn\'t read that spreadsheet. Try saving it as CSV.':'Couldn\'t read that file.');return}
  $('#toast').classList.remove('on');
- const LG=tabularLog(R);if(LG){if(!LG.length){toast('No wines found in that file.');return}
-  const key=e=>[e.producer,e.wine,e.vintage,e.date].join('|').toLowerCase(),have=new Set(C.map(key)),fresh=LG.filter(e=>{const k=key(e);if(have.has(k))return false;have.add(k);return true}),dup=LG.length-fresh.length;
-  if(!fresh.length){toast('Those '+LG.length+' wines are already in your Log.',4000);return}
+ let enr=0;const LG=tabularLog(R);if(LG){if(!LG.length){toast('No wines found in that file.');return}
+  const key=e=>[e.producer,e.wine,e.vintage,e.date].join('|').toLowerCase(),have=new Set(C.map(key)),old=new Map(C.map(c=>[key(c),c])),fresh=LG.filter(e=>{const k=key(e);if(have.has(k)){const o=old.get(k);if(o&&o.src==='cellar'&&e.lot&&e.lot.store&&!(o.lot&&o.lot.store)){o.lot=Object.assign({},o.lot||{},e.lot);enr++}return false}have.add(k);return true}),dup=LG.length-fresh.length;
+  if(!fresh.length){if(enr){await save();render()}toast(enr?'Added store and purchase details to '+enr+' wine'+(enr==1?'':'s')+' in your Log.':'Those '+LG.length+' wines are already in your Log.',4000);return}
   const m=await choose('Import to your Log',fresh.length+' drunk wine'+(fresh.length==1?'':'s')+' found in '+(f.name||'file')+(dup?' ('+dup+' already in your Log are skipped)':'')+'. They go in your Log and your cellar stays as it is.',[['add','Add '+fresh.length+' to my Log',1]]);if(!m)return;
   C=C.concat(fresh);await save();if(infoOpen)closeInfo();go('log');toast('Added '+fresh.length+' wine'+(fresh.length==1?'':'s')+' to your Log.',3600);return}
  const L=tabular(R);if(!L||!L.length){toast('I couldn\'t find wine columns in that file. It needs headers like Producer, Wine, Vintage, Quantity.',6000);return}
- if(B.length){const m=await choose('Import cellar',L.length+' wine'+(L.length==1?'':'s')+' found in '+(f.name||'file')+'.',[['add','Add to my cellar'],['replace','Replace my '+B.length+' wine'+(B.length==1?'':'s'),1]]);if(!m)return;if(m=='replace')B=[]}
- B=B.concat(L);fix();B.forEach(b=>{if(b.locs)normLocs(b)});await save();if(infoOpen)closeInfo();go('cellar');stag([...document.querySelectorAll('#cl .sw')].slice(0,10),24,75,720,80);toast('Imported '+L.length+' wine'+(L.length==1?'':'s')+'.',3200)}
+ if(B.length){const m=await choose('Import cellar',L.length+' wine'+(L.length==1?'':'s')+' found in '+(f.name||'file')+'.',[['add','Add to my cellar'],['replace','Replace my '+B.length+' wine'+(B.length==1?'':'s'),1],['log','Only add store and price details to my Log']]);if(!m)return;if(m=='log'){const n=enrichLog();await save();render();toast(n?'Added store and purchase details to '+n+' wine'+(n==1?'':'s')+' in your Log.':'No Log wines needed details.',4200);return}if(m=='replace')B=[]}
+ B=B.concat(L);enrichLog();fix();B.forEach(b=>{if(b.locs)normLocs(b)});await save();if(infoOpen)closeInfo();go('cellar');stag([...document.querySelectorAll('#cl .sw')].slice(0,10),24,75,720,80);toast('Imported '+L.length+' wine'+(L.length==1?'':'s')+'.',3200)}
 function pageHTML(){if(sort==='loc')sort='az';const hero=['cellar','drink','log','map'].includes(tab),plus=(['cellar','log','map'].includes(tab)?'<button class="plus" onclick="newW()" aria-label="Add wine"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:block"><path d="M12 5v14M5 12h14"/></svg></button>':'')+(tab==='cellar'?'<button class="plus" onclick="openSearch()" aria-label="Search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>':'');
  return (hero?`<div class="top"><h1><span class="oo">o</span>enograph</h1><div style="display:flex;gap:8px">${tab=='drink'&&sample?askB():''}${plus}<button class="plus" onclick="openSettings()" aria-label="Settings">${GEAR}</button></div></div>`:'')+({cellar:vCellar,wine:vWine,consume:vConsume,drink:vDrink,log:vLog,map:vMap,region:vRegion,rinfo:vInfo})[tab]()+((tab==='cellar'||tab==='drink'||tab==='log')?'<button class="btt" onclick="backTop()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Back to top</button>':'')}
 let bttR=0;function updBTT(){bttR=0;const b=document.querySelector('.btt');if(!b)return;const top=b.getBoundingClientRect().top+document.body.scrollTop;b.classList.toggle('on',top>innerHeight-60)}
