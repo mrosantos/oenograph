@@ -1362,9 +1362,9 @@ const askB=()=>`<button class="ask${busy?' busy':''}" onclick="ask()" aria-label
 async function ask(){
  if(!sample||!B.length||busy)return;busy=1;msg='Thinking…';render();
  const L=B.slice(0,150).map(b=>[b.id,b.producer,b.wine,b.vintage,b.region,b.country,b.grapes,b.type,'x'+b.qty,b.from||'',b.to||''].join('|')).join('\n');
- try{const r=await sample.json('You are a sommelier. Cellar, one per line: id|producer|wine|vintage|region|country|grapes|type|qty|from|to.\n'+L+'\nReturn only JSON: {"picks":[{"id":"","why":""}] (up to 4 bottles to open soon, one short reason each), "windows":[{"id":"","from":0,"to":0}] (only for bottles with empty from/to; conservative estimates)}.',{modelTier:'default',cache:false});
+ try{const r=await sample.json('You are a sommelier. Cellar, one per line: id|producer|wine|vintage|region|country|grapes|type|qty|from|to.\n'+L+'\nReturn only JSON: {"picks":[{"id":"","why":""}] (up to 4 bottles to open soon, one short reason each), "windows":[{"id":"","from":0,"to":0}] (only for bottles with empty from/to; conservative estimates)}.',{modelTier:'default',cache:false,maxTokens:4096});
   picks=r.picks||[];(r.windows||[]).forEach(w=>{const b=B.find(x=>x.id==w.id);if(b&&!b.from&&!b.to&&w.from&&w.to){b.from=w.from;b.to=w.to;b.est=true}});save();busy=0;msg='Windows marked "est." are Claude\'s estimates, not producer guidance.';render()
- }catch(e){busy=0;msg='Couldn\'t get suggestions right now.';render()}}
+ }catch(e){busy=0;msg='Couldn\'t get suggestions: '+((e&&e.message)||'unknown error');render()}}
 function csv(t){const R=[];let r=[],c='',q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}else if(ch=='"')q=true;else if(ch==','){r.push(c);c=''}else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;r.push(c);R.push(r);r=[];c=''}else c+=ch}if(c||r.length){r.push(c);R.push(r)}return R}
 async function dec(f){const u=new Uint8Array(await f.arrayBuffer());if(u[0]==255&&u[1]==254)return new TextDecoder('utf-16le').decode(u).replace(/^\uFEFF/,'');try{return new TextDecoder('utf-8',{fatal:true}).decode(u).replace(/^\uFEFF/,'')}catch(e){return new TextDecoder('windows-1252').decode(u)}}
 const NK=s=>String(s==null?'':s).toLowerCase().replace(/[^a-z0-9]/g,''),

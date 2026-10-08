@@ -82,7 +82,7 @@ async function callClaude(input,opts={}){
     r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{
       'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01',
       'anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:MODELS[opts.modelTier]||MODELS.default,max_tokens:opts.maxTokens||2048,messages})});
+      body:JSON.stringify({model:MODELS[opts.modelTier]||MODELS.default,max_tokens:opts.maxTokens||4096,messages})});
   }catch(e){throw {code:'network',message:'Couldn’t reach Claude. Check your connection.'}}
   if(!r.ok){
     let m='';try{m=(await r.json()).error.message||''}catch(e){}
