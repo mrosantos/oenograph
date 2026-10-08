@@ -4,7 +4,7 @@
 <title>Oenograph</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="touch-oe.png"><link rel="icon" href="icon-oe-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Oenograph"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#faf8f5">
-<style>@font-face{font-family:Italiana;src:url(fonts/italiana.woff2) format("woff2");font-display:swap}</style>
+<style>@font-face{font-family:Italiana;src:url(fonts/italiana.woff2) format("woff2");font-display:swap}html,body{overscroll-behavior-x:none}</style>
 <script>document.documentElement.classList.add("gate");window.claudeReady=new Promise(function(r){window.__cr=r});setTimeout(function(){if(window.__cr)window.__cr(null);document.documentElement.classList.remove("gate")},12000)</script>
 <script src="standalone.js" defer></script>
 <style>
@@ -670,9 +670,9 @@ function bind(){document.querySelectorAll('.sw').forEach(w=>{
   if(!moved){if(base)cls();else if(w.dataset.wish)wishAct(b.id);else if(w.dataset.log)openLogEdit(b.id);else openW(b);return}
   settle()};
  let wd=0,wt=0,wOn=false,arm=0;
- c.addEventListener('wheel',e=>{if(!wOn&&Math.abs(e.deltaX)<=Math.abs(e.deltaY)*1.2)return;e.preventDefault();
+ c.addEventListener('wheel',e=>{if(!wOn&&Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();
   if(!wOn){wOn=true;arm=0;closeRows(w);base=st();wd=0;dx=base}
-  wd+=e.deltaX*.6;if(!arm){if(Math.abs(wd)<10){clearTimeout(wt);wt=setTimeout(()=>{wOn=false},150);return}arm=wd>0?10:-10;c.style.transition='none';w.classList.add('drag')}
+  wd+=e.deltaX*.85;if(!arm){if(Math.abs(wd)<8){clearTimeout(wt);wt=setTimeout(()=>{wOn=false},150);return}arm=wd>0?8:-8;c.style.transition='none';w.classList.add('drag')}
   dx=Math.max(w.dataset.log?0:-96,Math.min(dl?96:0,base-(wd-arm)));w.classList.toggle('dragL',dx>6);c.style.transform=`translateX(${dx}px)`;
   clearTimeout(wt);wt=setTimeout(()=>{wOn=false;c.style.transition='';w.classList.remove('drag');if(arm)settle()},150)},{passive:false});
 })}

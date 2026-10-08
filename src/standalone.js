@@ -253,7 +253,7 @@ function showGate(){
       g.querySelector('#gf').onsubmit=async ev=>{
         ev.preventDefault();X.className='err';X.textContent='';
         if(!E.value.trim()||!P.value){X.textContent='Enter your email and password.';return}
-        B.disabled=true;
+        B.disabled=true;window.__loggingIn=1;
         try{
           if(mode==='in')await signInWithEmailAndPassword(auth,E.value.trim(),P.value);
           else await createUserWithEmailAndPassword(auth,E.value.trim(),P.value);
@@ -262,7 +262,7 @@ function showGate(){
           if(u)LS.set('oenoUid',u.uid);
           LS.del('oenoLocal');
           location.reload();
-        }catch(e){X.textContent=ERR[e.code]||('Something went wrong ('+(e.code||e.message||'unknown')+').');B.disabled=false}
+        }catch(e){X.textContent=ERR[e.code]||('Something went wrong ('+(e.code||e.message||'unknown')+').');B.disabled=false;window.__loggingIn=0}
       };
     };
     draw();document.body.appendChild(g);
@@ -275,13 +275,17 @@ if('serviceWorker' in navigator){
 }
 
 /* ---------- start ---------- */
+addEventListener('pageshow',e=>{if(e.persisted)location.reload()});
 (async()=>{
   try{
     app=initializeApp(firebaseConfig);
     auth=getAuth(app);
     fs=initializeFirestore(app,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
     user=await new Promise(ok=>{let d=0;const off=onAuthStateChanged(auth,u=>{if(!d){d=1;off();ok(u)}});setTimeout(()=>{if(!d){d=1;ok(auth.currentUser)}},5000)});
-    if(!user&&!OENO.local){await showGate();return} // page reloads after sign-in
+    if(!user&&!OENO.local){
+      // If a saved sign-in turns up late, don't leave the login screen up.
+      onAuthStateChanged(auth,u=>{if(u&&!window.__loggingIn){LS.set('oenoUid',LS.get('oenoUid')||u.uid);location.reload()}});
+      await showGate();return} // page reloads after sign-in
     if(user&&!LS.get('oenoUid'))LS.set('oenoUid',user.uid);
     const sample=LS.get('oenoKey')?makeSample():null,assets=makeAssets(),db=user?makeDb():null;
     const namespaces={
