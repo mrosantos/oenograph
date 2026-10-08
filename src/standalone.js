@@ -119,7 +119,7 @@ function makeDb(){
     },
     async set(data){
       if(navigator.onLine===false)throw new Error('offline');
-      await Promise.race([setDoc(ref(p),data),timeout(15000,'sync timed out')]);
+      await Promise.race([setDoc(ref(p),data),timeout(20000,'sync timed out (can\u2019t reach the database)')]);
     }
   })};
 }
@@ -279,7 +279,7 @@ if('serviceWorker' in navigator){
   try{
     app=initializeApp(firebaseConfig);
     auth=getAuth(app);
-    fs=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
+    fs=initializeFirestore(app,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
     user=await new Promise(ok=>{let d=0;const off=onAuthStateChanged(auth,u=>{if(!d){d=1;off();ok(u)}});setTimeout(()=>{if(!d){d=1;ok(auth.currentUser)}},5000)});
     if(!user&&!OENO.local){await showGate();return} // page reloads after sign-in
     if(user&&!LS.get('oenoUid'))LS.set('oenoUid',user.uid);
