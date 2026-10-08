@@ -671,7 +671,7 @@ function bind(){document.querySelectorAll('.sw').forEach(w=>{
  let wd=0,wt=0,wOn=false;
  c.addEventListener('wheel',e=>{if(!wOn&&Math.abs(e.deltaX)<=Math.abs(e.deltaY)*1.2)return;e.preventDefault();
   if(!wOn){wOn=true;closeRows(w);base=st();wd=0;dx=base;c.style.transition='none';w.classList.add('drag')}
-  wd+=e.deltaX;dx=Math.max(w.dataset.log?0:-w.offsetWidth,Math.min(dl?w.offsetWidth:0,base-wd));w.classList.toggle('dragL',dx>0);c.style.transform=`translateX(${dx}px)`;
+  wd+=e.deltaX*.6;dx=Math.max(w.dataset.log?0:-96,Math.min(dl?96:0,base-wd));w.classList.toggle('dragL',dx>6);c.style.transform=`translateX(${dx}px)`;
   clearTimeout(wt);wt=setTimeout(()=>{wOn=false;c.style.transition='';w.classList.remove('drag');settle()},150)},{passive:false});
 })}
 let CG={};try{CG=JSON.parse(localStorage.getItem('oenoG')||'{}')||{}}catch(e){}
