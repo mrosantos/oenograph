@@ -421,6 +421,53 @@ body.lotkb #app{padding-bottom:calc(var(--lkp,340px) + 60px)!important}
 #info .ibody.lsk,#info2 .ibody.lsk,#info.kb .ibody.lsk,#info2.kb .ibody.lsk,#info.addw .ibody.lsk,#info2.addw .ibody.lsk{padding-bottom:calc(var(--lkp,345px) + 60px)!important}
 .btt{visibility:hidden;display:flex;align-items:center;justify-content:center;gap:7px;margin:22px auto 10px;padding:10px 18px;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:999px;font:500 calc(13.5px*var(--ts)) system-ui,-apple-system,sans-serif;cursor:pointer}.btt.on{visibility:visible}.btt:active{opacity:.6}
 #mp{transition:opacity .55s ease}#mp.h{opacity:0}#mp .pin{cursor:pointer}#mp.h .pin{pointer-events:none}#mp .pin.off{display:none}#mp .hit{fill:transparent}#mp .d{fill:var(--acc);fill-opacity:.92;stroke:var(--card);stroke-width:1.8}#mp text{font:600 10px system-ui,-apple-system,sans-serif;fill:#fff;pointer-events:none}
+
+/* ===== Desktop / Mac layout (wide screens with a mouse or trackpad). Phone layout is unaffected. ===== */
+.dx{display:none}
+@media (min-width:1000px) and (hover:hover) and (pointer:fine){
+ nav{position:fixed;left:0;top:0;bottom:0;right:auto;width:208px;flex-direction:column;justify-content:flex-start;gap:4px;padding:34px 14px 16px;border-radius:0;border:0;border-right:1px solid var(--line);background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;z-index:6}
+ nav.hide{transform:none!important}
+ nav::before{display:none}
+ nav button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;padding:11px 14px;font-size:calc(15px*var(--ts));border-radius:12px;width:100%;text-align:left}
+ nav button.on{background:var(--thumb);color:var(--acc)}
+ nav button:not(.on):hover{background:var(--thumb)}
+ nav button svg{width:22px;height:22px;flex:none}
+ main{max-width:none;margin:0;padding:0 56px 48px 264px}
+ #app{max-width:1240px;margin:0 auto}
+ #app.fcol{min-height:100vh}
+ .top{padding:22px 0 14px}
+ .top h1{font-size:calc(34px*var(--ts))}
+ .sub{font-size:calc(15px*var(--ts))}
+ /* cellar + drink + log as multi-column grids */
+ #cl,#lg{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;align-items:stretch}
+ #cl>h2,#cl>.rg,#cl>.gb,#lg>h2{grid-column:1/-1}
+ .gb{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;align-items:stretch;padding-top:12px}
+ .gb.shut{display:none}
+ .gb>.rg{grid-column:1/-1}
+ #cl .sw,#lg .sw,.gb .sw{margin-bottom:0}
+ .sw{overflow:visible}
+ .sw .card{height:100%;box-sizing:border-box;transition:transform .2s,box-shadow .2s,border-color .2s}
+ .sw:hover .card{border-color:color-mix(in srgb,var(--acc) 35%,var(--line));box-shadow:0 6px 22px rgba(0,0,0,.08)}
+ .dx{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-size:calc(13px*var(--ts));color:var(--mut)}
+ .dx .wb{margin:0}
+ .dxt{display:inline-flex;align-items:center;gap:6px;color:var(--fg)}
+ .dxt i{width:10px;height:10px;border-radius:50%;display:inline-block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+ /* hover actions instead of swiping */
+ .sw .act,.sw .del{visibility:visible;opacity:0;pointer-events:none;position:absolute;top:auto;bottom:10px;left:auto;width:34px;height:34px;padding:0;border-radius:50%;background:var(--glass2);border:1px solid var(--gb);box-shadow:0 2px 8px rgba(0,0,0,.12);color:var(--acc);display:flex;align-items:center;justify-content:center;z-index:3;transition:opacity .15s,transform .15s}
+ .sw .act{right:12px}.sw .del{right:54px;color:#c0392b}
+ .sw .act svg{width:18px;height:18px}.sw .del svg{width:17px;height:17px}
+ .sw:hover .act,.sw:hover .del,.sw:focus-within .act,.sw:focus-within .del{opacity:1;pointer-events:auto}
+ .sw .act:hover,.sw .del:hover{transform:scale(1.1)}
+ .sw.open,.sw.drag,.sw.openL,.sw.dragL,.sw.dying{background:none}
+ /* map: map + stats on the left, lists on the right */
+ .mapw{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(340px,1fr);grid-template-rows:auto 1fr;column-gap:24px;height:calc(100vh - 92px);align-items:start}
+ .mapw>.seg{grid-column:1;grid-row:1}
+ .mapw>.mapbox{grid-column:1;grid-row:2;align-self:start}
+ .mapw>.mlist{grid-column:2;grid-row:1/3;margin-top:0;height:100%;padding-bottom:40px}
+ #app.mapmode{max-width:1500px}
+ .btt{display:none!important}
+ #info .ic,#info2 .ic{max-width:720px}
+}
 </style></head><body><main id="app"></main>
 <nav><button data-t="cellar"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5h4v4.2c0 1.3 1.7 2.3 1.7 4.4V21a1 1 0 0 1-1 1H9.3a1 1 0 0 1-1-1V11.1c0-2.1 1.7-3.1 1.7-4.4z"/><path d="M8.3 15h7.4"/></svg><span>Cellar</span></button><button data-t="drink"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10c0 5-1.6 8-5 8S7 8 7 3z"/><path d="M12 11v9M8.5 21h7"/></svg><span>Drink</span></button><button data-t="log"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v16H5z"/><path d="M8.5 9h7M8.5 13h7M8.5 17h4"/></svg><span>Log</span></button><button data-t="map"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v1.6M12 19.4V21M3 12h1.6M19.4 12H21"/><path d="M15.8 8.2 13.13 13.13 8.2 15.8 10.87 10.87z"/><path d="M15.8 8.2 13.13 13.13 10.87 10.87z" fill="currentColor"/></svg><span>Map</span></button></nav>
 <div id="sheet"></div><div id="toast"></div><div id="saved" role="status" aria-live="polite"></div><div id="info"></div><div id="info2"></div><div id="viewer" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:#000;z-index:11;align-items:center;justify-content:center"></div>
@@ -614,7 +661,15 @@ document.addEventListener('focusout',e=>{const I=e.target&&e.target.closest&&e.t
 if(window.visualViewport){const f=()=>document.querySelectorAll('#info.kb,#info2.kb').forEach(I=>kbSync(I));visualViewport.addEventListener('resize',()=>{f();if(Date.now()-kbF<4000)kbReveal(document.activeElement)});visualViewport.addEventListener('scroll',f)}
 const wbk=b=>{const f=ok(b.from),t=ok(b.to);if(!f&&!t)return 9;if(t&&t<Y)return 0;if(f>Y){const d=f-Y;return d<=2?3:d<=5?4:5}return t&&t<=Y+1?1:2};
 const wbadge=b=>{const k=wbk(b),f=ok(b.from);const m={0:['pk','Past peak'],1:['sn','Drink soon'],2:['rd','Ready now'],3:['ho','Ready '+f]}[k];return m?`<div><span class="wb ${m[0]}">${m[1]}</span></div>`:''};
-function card(b,x='',dl=false){return `<div class="sw" data-id="${b.id}">${dl?`<button class="del" aria-label="Delete wine">${TRASH}</button>`:''}<button class="act" aria-label="Drink"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10c0 5-1.6 8-5 8S7 8 7 3z"/><path d="M12 11v9M8.5 21h7"/></svg></button><div class="card"><div class="row"><span><b>${wn(b)}</b>${b.wine&&b.producer?`<br>${esc(b.producer)}`:''}</span><span class="m" style="text-align:right;white-space:nowrap;flex:none">${b.vintage||'NV'}${b.qty>1?'<br>×'+b.qty:''}</span></div><div class="m">${orig(b)}${b.grapes?' · '+esc(b.grapes):''}</div>${x}</div></div>`}
+const TYC={Red:'#7a2433',White:'#d9c46b',Rosé:'#e49aa8',Rose:'#e49aa8',Sparkling:'#c9b97a',Orange:'#d98a3d',Dessert:'#b8862e',Fortified:'#6b3b2a'};
+function dxRow(b,nw){try{const k=wbk(b),f=ok(b.from),t=ok(b.to),m={0:['pk','Past peak'],1:['sn','Drink soon'],2:['rd','Ready now'],3:['ho','Ready '+f],4:['ho','Ready '+f],5:['ho','Ready '+f]}[k],l=b.locs&&b.locs[0],pr=unit(b),bits=[];
+ if(b.type)bits.push(`<span class="dxt"><i style="background:${TYC[b.type]||'var(--mut)'}"></i>${esc(b.type)}</span>`);
+ if(m)bits.push(`<span class="wb ${m[0]}">${m[1]}</span>`);
+ if((f||t)&&!nw)bits.push(`<span>${f&&t?f+'–'+t:f?'from '+f:'by '+t}</span>`);
+ if(pr>0&&!PF.hideCost)bits.push(`<span>$${fmt(pr)}</span>`);
+ if(l&&l.p)bits.push(`<span>${esc(l.p+(l.d?' · '+l.d:''))}</span>`);
+ return bits.length?`<div class="dx">${bits.join('')}</div>`:''}catch(e){return ''}}
+function card(b,x='',dl=false){return `<div class="sw" data-id="${b.id}">${dl?`<button class="del" aria-label="Delete wine">${TRASH}</button>`:''}<button class="act" aria-label="Drink"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10c0 5-1.6 8-5 8S7 8 7 3z"/><path d="M12 11v9M8.5 21h7"/></svg></button><div class="card"><div class="row"><span><b>${wn(b)}</b>${b.wine&&b.producer?`<br>${esc(b.producer)}`:''}</span><span class="m" style="text-align:right;white-space:nowrap;flex:none">${b.vintage||'NV'}${b.qty>1?'<br>×'+b.qty:''}</span></div><div class="m">${orig(b)}${b.grapes?' · '+esc(b.grapes):''}</div>${x}${dxRow(b,!!x)}</div></div>`}
 function cuts(n){const w=Array.from({length:n},()=>.4+Math.random()*1.4),t=w.reduce((a,b)=>a+b,0);let a=0;return[0,...w.map(x=>(a+=x/t*100))]}
 const jt=()=>(Math.random()-.5)*1.8;
 function shredRight(card){const r=card.getBoundingClientRect(),wr=card.parentNode.getBoundingClientRect(),vis=Math.max(10,Math.min(r.width,wr.right-r.left)),vp=vis/r.width*100,N=15,Cs=cuts(N),host=document.createElement('div');host.style.cssText='position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:20';document.body.appendChild(host);
@@ -784,7 +839,7 @@ function drawCal(){const d=$('#cal');if(!d||!calS)return;const{y,m,id}=calS,t=to
 document.addEventListener('click',e=>{const c=$('#cal');if(c&&!e.composedPath().includes(c)&&!/b$/.test(e.target.id||'')){popOut(c);calS=null}});
 function vp(){const old=$('#vpop');if(old){old.remove();return}const b=$('#vb'),cu=$('#f_vintage').value;let o='<div data-v="">Non-vintage</div>';for(let y=Y+1;y>=1900;y--)o+=`<div data-v="${y}"${cu==y?' class="sel"':''}>${y}</div>`;const d=document.createElement('div');d.id='vpop';d.className='vpop';d.innerHTML=o;b.after(d);d.onclick=e=>{const v=e.target.dataset?e.target.dataset.v:undefined;if(v===undefined)return;$('#f_vintage').value=v;b.textContent=(v||'Non-vintage')+' ⌄';d.remove()};const x=d.querySelector('.sel');if(x)d.scrollTop=x.offsetTop-80}
 const locInner=b=>{const L=b.locs||[],multi=L.length>1,chips=(i,sel)=>PL.map((p,j)=>`<button type="button" class="chip${p===sel?' on':''}" aria-pressed="${p===sel}" onclick="setLoc(${i},${j})">${esc(p)}</button>`).join('')+`<button type="button" class="chip add" onclick="newPlaceFor(${i})">+ New place</button>`,
- nw=i=>locNew===i?`<div class="r2 pp"><input id="npn" placeholder="e.g. Wine fridge" autocomplete="off" oninput="this.closest('.pp').classList.toggle('has',!!this.value.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();addPlaceInline()}"><button type="button" class="plus pa" aria-label="Add place" onmousedown="event.preventDefault()" onclick="addPlaceInline()">+</button></div>`:'';
+ nw=i=>locNew===i?`<div class="r2 pp"><input id="npn" placeholder="e.g. Wine fridge" autocomplete="off" oninput="this.closest('.pp').classList.toggle('has',!!this.value.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();addPlaceInline()}"><button type="button" class="plus pa" aria-label="Add place" onmousedown="event.preventDefault()" onclick="addPlaceInline()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:block"><path d="M12 5v14M5 12h14"/></svg></button></div>`:'';
  if(!L.length)return `<div class="chips">${chips(-1,'')}</div>${nw(-1)}`;
  return L.map((l,i)=>`<div class="locrow"><div class="chips">${chips(i,l.p)}</div>${nw(i)}${l.p?`<div class="r2"><input id="lcd${i}" placeholder="Rack, shelf or bin (optional)" value="${esc(l.d||'')}" aria-label="Rack, shelf or bin">${multi?`<input id="lcq${i}" class="lq" type="number" inputmode="numeric" min="0" value="${l.q||''}" placeholder="Qty" aria-label="Bottles here">`:''}<button type="button" class="t" aria-label="Remove this location" onclick="rmLoc(${i})">Remove</button></div>`:''}</div>`).join('')+(L.every(l=>l.p)?`<button type="button" class="t" onclick="addLoc()">+ Another location</button>`:'')};
 const locSec=b=>'';
@@ -1440,7 +1495,7 @@ async function imp(f){const nm=(f.name||'').toLowerCase(),u=new Uint8Array(await
  const L=tabular(R);if(!L||!L.length){toast('I couldn\'t find wine columns in that file. It needs headers like Producer, Wine, Vintage, Quantity.',6000);return}
  if(B.length){const m=await choose('Import cellar',L.length+' wine'+(L.length==1?'':'s')+' found in '+(f.name||'file')+'.',[['add','Add to my cellar'],['replace','Replace my '+B.length+' wine'+(B.length==1?'':'s'),1]]);if(!m)return;if(m=='replace')B=[]}
  B=B.concat(L);fix();B.forEach(b=>{if(b.locs)normLocs(b)});await save();if(infoOpen)closeInfo();go('cellar');stag([...document.querySelectorAll('#cl .sw')].slice(0,10),24,75,720,80);toast('Imported '+L.length+' wine'+(L.length==1?'':'s')+'.',3200)}
-function pageHTML(){if(sort==='loc')sort='az';const hero=['cellar','drink','log','map'].includes(tab),plus=(['cellar','log','map'].includes(tab)?'<button class="plus" onclick="newW()" aria-label="Add wine">+</button>':'')+(tab==='cellar'?'<button class="plus" onclick="openSearch()" aria-label="Search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>':'');
+function pageHTML(){if(sort==='loc')sort='az';const hero=['cellar','drink','log','map'].includes(tab),plus=(['cellar','log','map'].includes(tab)?'<button class="plus" onclick="newW()" aria-label="Add wine"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:block"><path d="M12 5v14M5 12h14"/></svg></button>':'')+(tab==='cellar'?'<button class="plus" onclick="openSearch()" aria-label="Search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>':'');
  return (hero?`<div class="top"><h1><span class="oo">o</span>enograph</h1><div style="display:flex;gap:8px">${tab=='drink'&&sample?askB():''}${plus}<button class="plus" onclick="openSettings()" aria-label="Settings">${GEAR}</button></div></div>`:'')+({cellar:vCellar,wine:vWine,consume:vConsume,drink:vDrink,log:vLog,map:vMap,region:vRegion,rinfo:vInfo})[tab]()+((tab==='cellar'||tab==='drink'||tab==='log')?'<button class="btt" onclick="backTop()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Back to top</button>':'')}
 let bttR=0;function updBTT(){bttR=0;const b=document.querySelector('.btt');if(!b)return;const top=b.getBoundingClientRect().top+document.body.scrollTop;b.classList.toggle('on',top>innerHeight-60)}
 (function(){const a=document.getElementById('app');if(!a)return;new MutationObserver(()=>{if(!bttR)bttR=requestAnimationFrame(updBTT)}).observe(a,{childList:true,subtree:true});addEventListener('resize',updBTT);setTimeout(updBTT,300)})();
