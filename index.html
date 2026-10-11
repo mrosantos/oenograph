@@ -490,7 +490,7 @@ body.lotkb #app{padding-bottom:calc(var(--lkp,340px) + 60px)!important}
  #info .ic,#info2 .ic{max-width:720px}
 }
 
-.dwr{display:flex;gap:10px;margin:4px 0 14px}.dwr .dwp{margin:0;flex:1 1 0;justify-content:space-between;padding:0 14px;font-size:calc(14px*var(--ts));white-space:nowrap}.dwr .ask{flex:1 1 0;justify-content:center;height:40px;margin:0}@media not all and (min-width:1000px) and (hover:hover) and (pointer:fine){.dwh,.askh,.msr{display:none!important}}
+.dwr{display:flex;gap:10px;margin:4px 0 14px}.dwr .dwp{margin:0;flex:1 1 0;justify-content:center;gap:8px;padding:0 14px;white-space:nowrap}.dwr .dwp,.dwr .ask{font:400 calc(14px*var(--ts))/1 -apple-system,system-ui,"Segoe UI",sans-serif;color:var(--fg);white-space:nowrap}.dwr .ask{flex-direction:row-reverse;gap:8px}.dwr .ask{flex:1 1 0;justify-content:center;height:40px;margin:0}@media not all and (min-width:1000px) and (hover:hover) and (pointer:fine){.dwh,.askh,.msr{display:none!important}}
 .dwp{display:inline-flex;align-items:center;gap:16px;height:40px;padding:0 16px 0 18px;margin:0;flex:none;border-radius:22px;background:var(--glass);-webkit-backdrop-filter:var(--bf);backdrop-filter:var(--bf);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--hl),0 4px 16px rgba(0,0,0,.06);color:var(--fg);font:600 calc(15px*var(--ts))/1 inherit}.dwp svg{color:var(--acc);flex:none}
 .tl{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:0 6px;margin:0 0 14px}.tlbars{position:relative;display:flex;align-items:flex-end;padding:24px 8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}.tlbars::-webkit-scrollbar{display:none}
 .tlg{position:absolute;left:0;top:18px;bottom:18px;width:0;border-radius:18px;background:color-mix(in srgb,var(--acc) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 22%,transparent),0 0 14px color-mix(in srgb,var(--acc) 20%,transparent);opacity:0;transition:transform .5s cubic-bezier(.32,.72,0,1),width .5s cubic-bezier(.32,.72,0,1),opacity .3s;pointer-events:none}
@@ -1516,7 +1516,7 @@ function tlGlow(anim,scroll){const g=$('#tlg'),r=$('.tlbars'),b=document.querySe
 function tlSel(y){if(tly===y)return;tly=y;document.querySelectorAll('.tlc').forEach(b=>{const on=+b.dataset.y===y;b.classList.toggle('sel',on);b.setAttribute('aria-pressed',on)});tlGlow(true);
  const c=$('#tlcards');if(c){c.innerHTML=tlCards();c.querySelectorAll('.sw').forEach((e,i)=>e.style.setProperty('--i',i));bind();a11y(c)}}
 function vDwin(){
- const W=dwW(),h0=`<div class="stk" style="padding-top:26px;padding-bottom:6px"><button class="bkb" onclick="bk()">‹ Drink</button></div><div class="ttl" style="margin:8px 0 12px;padding-top:6px;line-height:1.3;font-size:calc(28px*var(--ts))">Drinking window</div>`;
+ const W=dwW(),h0=`<div class="row stk" style="padding-top:26px;padding-bottom:6px;align-items:center"><button class="bkb" onclick="bk()">‹ Drink</button><span class="lg"><span><span class="oo">o</span>e</span></span></div><div class="ttl" style="margin:8px 0 12px;padding-top:6px;line-height:1.3;font-size:calc(28px*var(--ts))">Drinking window</div>`;
  if(!W.length)return h0+'<div class="empty">Add drink windows to your bottles to see how they spread over the years.<br>On the Drink tab, Ask Claude can estimate them.</div>';
  const lo=Math.max(Y-3,Math.min(Y,...W.map(b=>ok(b.from)))),hi=Math.min(Y+12,Math.max(Y+5,...W.map(b=>ok(b.to)))),ys=[];for(let y=lo;y<=hi;y++)ys.push(y);
  if(tly==null||tly<lo||tly>hi)tly=Y;
