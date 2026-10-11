@@ -497,7 +497,7 @@ body.lotkb #app{padding-bottom:calc(var(--lkp,340px) + 60px)!important}
 .tlc{position:relative;z-index:1;flex:1 0 58px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;background:none;border:0;padding:6px 0 8px;border-radius:14px;color:var(--mut);font-size:calc(12px*var(--ts));-webkit-tap-highlight-color:transparent}
 .tlb{display:block;width:46%;max-width:34px;border-radius:7px 7px 3px 3px;background:var(--acc);opacity:.5;transform-origin:bottom;animation:tlg .7s cubic-bezier(.22,.9,.3,1) both;animation-delay:calc(var(--i)*35ms);transition:opacity .3s}.tlc.past .tlb{background:var(--mut);opacity:.35}.tlc.now .tlb{opacity:.8}.tlc.sel .tlb{opacity:1}.tlc.now .tly,.tlc.sel .tly{color:var(--acc);font-weight:600}.tln{min-height:14px}
 @keyframes tlg{from{transform:scaleY(0)}}@keyframes tlIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
-.tlsel .sw{opacity:0;animation:tlIn .7s cubic-bezier(.33,.1,.25,1) both;animation-delay:calc(var(--i,0)*80ms)}.tlsel .gb{padding-top:6px}
+.tlsel .sw{opacity:0;animation:tlIn .7s cubic-bezier(.33,.1,.25,1) both;animation-delay:calc(var(--i,0)*80ms)}.tlsel .gb{padding-top:6px}.tlsel>h2{position:sticky;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:5;margin:0 -18px;padding:12px 18px 14px;background:linear-gradient(to bottom,var(--bg) 72%,transparent)}
 .hdel{display:none}.sw[data-log] .card{position:relative}.lact{position:absolute;right:12px;bottom:10px;display:flex;align-items:center}.sw[data-log] .card>div:last-child>:last-child{padding-right:52px;box-sizing:border-box}
 /* Mouse / trackpad: Drink and Delete appear on hover instead of swiping */
 @media (hover:hover) and (pointer:fine){
@@ -1516,7 +1516,7 @@ function tlGlow(anim,scroll){const g=$('#tlg'),r=$('.tlbars'),b=document.querySe
 function tlSel(y){if(tly===y)return;tly=y;document.querySelectorAll('.tlc').forEach(b=>{const on=+b.dataset.y===y;b.classList.toggle('sel',on);b.setAttribute('aria-pressed',on)});tlGlow(true);
  const c=$('#tlcards');if(c){c.innerHTML=tlCards();c.querySelectorAll('.sw').forEach((e,i)=>e.style.setProperty('--i',i));bind();a11y(c)}}
 function vDwin(){
- const W=dwW(),h0=`<div class="row stk" style="padding-top:26px;padding-bottom:6px;align-items:center"><button class="bkb" onclick="bk()">‹ Drink</button><span class="lg"><span><span class="oo">o</span>e</span></span></div><div class="ttl" style="margin:8px 0 12px;padding-top:6px;line-height:1.3;font-size:calc(28px*var(--ts))">Drinking window</div>`;
+ const W=dwW(),h0=`<div class="row stk" style="padding-top:26px;padding-bottom:6px;align-items:center;position:relative;z-index:6"><button class="bkb" onclick="bk()">‹ Drink</button><span class="lg" style="box-shadow:inset 0 1px 0 var(--hl),0 2px 8px rgba(0,0,0,.08)"><span><span class="oo">o</span>e</span></span></div><div class="ttl" style="margin:8px 0 12px;padding-top:6px;line-height:1.3;font-size:calc(28px*var(--ts))">Drinking window</div>`;
  if(!W.length)return h0+'<div class="empty">Add drink windows to your bottles to see how they spread over the years.<br>On the Drink tab, Ask Claude can estimate them.</div>';
  const lo=Math.max(Y-3,Math.min(Y,...W.map(b=>ok(b.from)))),hi=Math.min(Y+12,Math.max(Y+5,...W.map(b=>ok(b.to)))),ys=[];for(let y=lo;y<=hi;y++)ys.push(y);
  if(tly==null||tly<lo||tly>hi)tly=Y;
