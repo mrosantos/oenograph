@@ -479,15 +479,22 @@ body.lotkb #app{padding-bottom:calc(var(--lkp,340px) + 60px)!important}
  .mapw>.seg{grid-column:1/6;grid-row:1;margin:0!important}
  .mapw>.mapbox{grid-column:1/6;grid-row:2;height:clamp(230px,44vh,520px);aspect-ratio:auto}
  .mapw>.mmet{display:block;grid-column:6;grid-row:1/3;align-self:stretch}
- .mmet .mstats{height:100%;grid-template-columns:1fr!important;grid-template-rows:repeat(4,1fr);padding:6px 0;box-sizing:border-box}
+ .mapw>.mmet{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-sizing:border-box}.mmet .tin{height:100%;padding:0!important}.mmet .mstats{background:none!important;border:0!important;border-radius:0!important;height:100%;grid-template-columns:1fr!important;grid-template-rows:repeat(4,1fr);padding:6px 0;box-sizing:border-box}
  .mmet .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 6px}
  .mmet .tile+.tile{border-left:0;border-top:1px solid var(--line)}
  .mmet .tile b{font-size:calc(24px*var(--ts))}.mmet .tile span{font-size:calc(12px*var(--ts))}
- .mapw>.mlist,.mapw>.mtr{display:block;grid-row:3;margin:0;padding:0 0 0;height:100%;min-height:0;overflow-y:auto;scrollbar-width:none;overscroll-behavior:contain;-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 22px),transparent);padding-bottom:22px;box-sizing:border-box}
+ .mapw>.mlist,.mapw>.mtr{display:block;grid-row:3;margin:0;height:100%;min-height:0;overflow-y:auto;scrollbar-width:none;overscroll-behavior:contain;box-sizing:border-box;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:0}
+ .mapw>.mlist,.mapw>.mtr{padding-bottom:0!important}
  .mapw>.mlist::-webkit-scrollbar,.mapw>.mtr::-webkit-scrollbar{display:none}
  .mapw>.mlist{grid-column:1/3}.mapw>#mtc{grid-column:3/5}.mapw>#mtt{grid-column:5/7}
- .mapw .mlist h2,.mapw .mtr h2{position:sticky;top:0;z-index:2;margin:0;padding:2px 4px 6px;background:var(--bg)}
- .mapw .mlist>.ttl{margin-top:0}
+ .mapw .tin{padding:0 0 10px}
+ .mapw .mlist h2,.mapw .mtr h2{position:sticky;top:0;z-index:2;margin:0;padding:14px 18px 8px;background:var(--card)}
+ .mapw .mlist>.tin>.ttl{margin:0;padding:14px 18px 6px}
+ .mapw .mlist .card.sc{margin:6px 12px 4px!important}
+ .mapw .mlist .mrow,.mapw .mtr .mrow{background:none;border-radius:0!important;padding:10px 18px}
+ .mapw .mlist .mrow:last-child,.mapw .mtr .mrow:last-child{border-bottom:0}
+ .mapw .mlist .empty,.mapw .mlist>.tin>div:not(.ttl):not(.card){padding-left:18px;padding-right:18px}
+ .mmet .mstats{grid-template-rows:none!important;grid-auto-rows:1fr}
  .mlist .mdup{display:none}
  #app.mapmode{max-width:1500px}
  .btt{display:none!important}
@@ -798,7 +805,7 @@ function bind(){document.querySelectorAll('.sw').forEach(w=>{
 })}
 let CG={};try{CG=JSON.parse(localStorage.getItem('oenoG')||'{}')||{}}catch(e){}
 const CHEV='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
-function togG(h){const g=h.nextElementSibling;if(!g||!g.classList.contains('gb'))return;const k=(h.dataset.s||sort)+':'+h.dataset.k,shut=!h.classList.contains('shut'),EZ='cubic-bezier(.6,0,.4,1)';
+function togG(h){const g=h.nextElementSibling;if(!g||!g.classList.contains('gb'))return;{const t0=performance.now();(function f(){updBTT();if(performance.now()-t0<700)requestAnimationFrame(f)})()}const k=(h.dataset.s||sort)+':'+h.dataset.k,shut=!h.classList.contains('shut'),EZ='cubic-bezier(.6,0,.4,1)';
  h.classList.toggle('shut',shut);h.setAttribute('aria-expanded',String(!shut));if(shut)CG[k]=1;else delete CG[k];try{localStorage.setItem('oenoG',JSON.stringify(CG))}catch(e){}
  if(g._a)try{g._a.cancel()}catch(e){}
  if(!g.animate){g.classList.toggle('shut',shut);return}
@@ -1182,9 +1189,8 @@ function setMM(m){if(m===mmode||mmB)return;mmB=1;const d=m==='tasted'?1:-1;mmode
  const S=mstats(),l=$('#mlist'),g=$('#mp');
  document.querySelectorAll('#mg path').forEach(p=>{const o=S.c[p.dataset.c];p.classList.toggle('has',!!o);p.style.fillOpacity=o?(.45+.55*o.bottles/S.max).toFixed(2):''});
  if(g){g.classList.add('h');setTimeout(()=>{g.innerHTML=pinsHTML(S);placePins(false)},320)}
- const apply=()=>{if(l){l.innerHTML=vMapList(S);l.scrollTop=0;syncIns(1)}mmB=0};
- if(!l||!l.animate){apply();return}
- fswap(()=>[...l.children].filter(e=>!e.classList.contains('ttl')),apply,d)}
+ if(!l){mmB=0;return}
+ mapSwap(d,()=>{l.innerHTML=vMapList(S);l.scrollTop=0;syncIns();mmB=0})}
 
 function mstats(){const c={},g={},t={};let max=1;const T=mmode==='tasted';
  (T?C:B).forEach(b=>{const n=cn(b.country),q=T?1:(+b.qty||1),gs=(b.grapes||'').split(/[,\/;&]+/).map(x=>x.trim()).filter(Boolean);
@@ -1196,18 +1202,23 @@ const TC=t=>{const k=(t||'').toLowerCase();return k.includes('ros')?'#f2a5b4':k.
 const mrow=(l,v,f,a='',pre='')=>`<div class="mrow" ${a}><div class="row"><span>${pre}${esc(l)}</span><span class="m">${v}</span></div><div class="bar"><i style="width:${Math.max(3,f*100)}%"></i></div></div>`;
 const tile=(v,l)=>`<div class="tile"><b>${v}</b><span class="m">${l}</span></div>`;
 const EMPTY='<svg viewBox="0 0 190 120" width="170" style="color:var(--acc);display:block;margin:0 auto" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(20 70 52)"><path d="M14 40h54c7 0 12 5 12 12v6c0 7-5 12-12 12H14c-4 0-7-3-7-7V47c0-4 3-7 7-7z"/><path d="M80 48h24c3 0 6 2 8 6-2 4-5 6-8 6H80"/><path d="M22 46v18"/><path d="M112 49v10"/></g><path d="M104 92c10-6 28-5 38 2s3 14-12 15-27-3-31-11c-2-4 0-7 5-6z" fill="currentColor" fill-opacity=".14"/><path d="M99 80c1 4 2 7 2 9"/><circle cx="154" cy="82" r="3.2" fill="currentColor" fill-opacity=".5"/><circle cx="166" cy="96" r="2.4" fill="currentColor" fill-opacity=".5"/><path d="M20 112c14 2 30 1 44-1"/></svg>';
-function vMapList(S){S=S||mstats();const o=msel&&S.c[msel],T=mmode==='tasted',SRC=T?C:B,ra=(a)=>a;
+function vMapList(S){return '<div class="tin">'+vMapList0(S)+'</div>'}
+function vMapList0(S){S=S||mstats();const o=msel&&S.c[msel],T=mmode==='tasted',SRC=T?C:B,ra=(a)=>a;
  if(msel&&!o)return `<div class="ttl" style="margin:2px 0 10px;font-size:calc(28px*var(--ts));display:flex;align-items:center">${FL(msel,1)}${esc(msel)}</div><div style="text-align:center;padding:14px 8px 24px">${EMPTY}<div style="font:600 calc(19px*var(--ts)) Georgia,serif;margin-top:14px">${T?'Nothing tasted from here yet.':'Not a drop from here — yet.'}</div><div class="m" style="margin-top:14px;line-height:1.5">${T?'You haven\'t tasted any wines from '+esc(msel)+' yet. Tap another country.':'You don\'t have any wines from '+esc(msel)+' in your cellar. Tap another country, or add a bottle with the + button.'}</div></div>`;
  if(o){const mx=Math.max(...Object.values(o.reg));
-  return `<div class="ttl" style="margin:2px 0 10px;font-size:calc(28px*var(--ts));display:flex;align-items:center">${FL(o.name,1)}${esc(o.name)}</div><div class="mdup"><div class="mstats"${T?' style="grid-template-columns:repeat(3,1fr)"':''}>${tile(o.bottles,T?'tasted':'bottles')}${tile(T?o.ws.size:o.wines,'wines')}${tile(Object.keys(o.reg).length,'regions')}${T?'':tile(PF.hideCost?'•••':o.cost?'$'+fmt(o.cost):'—','invested')}</div></div><div class="card sc" role="button" tabindex="0" data-co="${esc(o.name)}" style="margin:12px 0 4px;cursor:pointer"><div class="row" style="align-items:center"><b>View all ${T?'tastings':'wines'} from ${esc(o.name)}</b><span class="m">${T?o.bottles:o.wines} ›</span></div></div><h2>Regions</h2>${topN(o.reg,40).map(([r,q])=>mrow(r,q,q/mx,`data-r="${esc(r)}"`)).join('')}<div class="mdup mgt"><div class="mcol"><h2>Top cépages</h2>${topN(o.gr,6).map(([r,q])=>mrow(r,q,q/o.bottles,ra(`data-g="${esc(r)}"`))).join('')||'<div class="m">No grapes recorded.</div>'}</div><div class="mcol"><h2>By type</h2>${topN(o.ty,6).map(([r,q])=>mrow(r,q,q/o.bottles,ra(`data-t="${esc(r)}"`),`<span class="tdot" style="background:${TC(r)}"></span>`)).join('')}</div></div>`}
+  return `<div class="ttl" style="margin:2px 0 10px;font-size:calc(28px*var(--ts));display:flex;align-items:center">${FL(o.name,1)}${esc(o.name)}</div><div class="mdup"><div class="mstats"${T?' style="grid-template-columns:repeat(3,1fr)"':''}>${tile(o.bottles,T?'tasted':'bottles')}${tile(T?o.ws.size:o.wines,'wines')}${tile(Object.keys(o.reg).length,'regions')}${T?'':tile(PF.hideCost?'•••':o.cost?'$'+fmt(o.cost):'—','invested')}</div></div><div class="card sc" role="button" tabindex="0" data-co="${esc(o.name)}" style="margin:12px 0 4px;cursor:pointer"><div class="row" style="align-items:center"><b>View all ${T?'tastings':'wines'} from ${esc(o.name)}</b><span class="m">${T?o.bottles:o.wines} ›</span></div></div><h2>Regions</h2>${topN(o.reg,40).map(([r,q])=>mrow(r,q,q/mx,`data-r="${esc(r)}"`)).join('')}<div class="mdup mgt"><div class="mcol"><h2>Top cépages</h2>${topN(o.gr,6).map(([r,q])=>mrow(r,q,q/o.bottles,ra(`data-g="${esc(r)}"`))).join('')||'<div class="m">No grapes recorded.</div>'}</div><div class="mcol"><h2>Wine types</h2>${topN(o.ty,6).map(([r,q])=>mrow(r,q,q/o.bottles,ra(`data-t="${esc(r)}"`),`<span class="tdot" style="background:${TC(r)}"></span>`)).join('')}</div></div>`}
  if(!SRC.length)return T?'<div class="empty">Log a wine to light up the places you\'ve tasted.</div>':'<div class="empty">Add wines to light up the map.</div>';
  const nb=T?C.length:B.reduce((a,b)=>a+(+b.qty||1),0),cost=T?0:B.reduce((a,b)=>a+costOf(b),0),cl=Object.values(S.c).sort((a,b)=>b.bottles-a.bottles),uw=T?new Set(C.map(c=>rgn((c.producer||'')+'|'+(c.wine||'')+'|'+(c.vintage||'')))).size:B.length;
- return `<div class="mdup"><div class="mstats">${tile(nb,T?'tasted':'bottles')}${tile(uw,'wines')}${tile(cl.length,'countries')}${T?tile(Object.values(S.c).reduce((a,o)=>a+Object.keys(o.reg).filter(r=>r!=='Region not set').length,0),'regions'):tile(PF.hideCost?'•••':cost?'$'+fmt(cost):'—','invested')}</div></div><h2>Countries</h2>${cl.map(c=>mrow(c.name,c.bottles+(GEO[c.name]?'':' · not on map'),c.bottles/S.max,`data-c="${esc(c.name)}"`,FL(c.name))).join('')}<div class="mdup mgt"><div class="mcol"><h2>Top cépages</h2>${topN(S.g,6).map(([r,q])=>mrow(r,q,q/nb,ra(`data-g="${esc(r)}"`))).join('')}</div><div class="mcol"><h2>By type</h2>${topN(S.t,6).map(([r,q])=>mrow(r,q,q/nb,ra(`data-t="${esc(r)}"`),`<span class="tdot" style="background:${TC(r)}"></span>`)).join('')}</div></div>`}
+ return `<div class="mdup"><div class="mstats">${tile(nb,T?'tasted':'bottles')}${tile(uw,'wines')}${tile(cl.length,'countries')}${T?tile(Object.values(S.c).reduce((a,o)=>a+Object.keys(o.reg).filter(r=>r!=='Region not set').length,0),'regions'):tile(PF.hideCost?'•••':cost?'$'+fmt(cost):'—','invested')}</div></div><h2>Countries</h2>${cl.map(c=>mrow(c.name,c.bottles+(GEO[c.name]?'':' · not on map'),c.bottles/S.max,`data-c="${esc(c.name)}"`,FL(c.name))).join('')}<div class="mdup mgt"><div class="mcol"><h2>Top cépages</h2>${topN(S.g,6).map(([r,q])=>mrow(r,q,q/nb,ra(`data-g="${esc(r)}"`))).join('')}</div><div class="mcol"><h2>Wine types</h2>${topN(S.t,6).map(([r,q])=>mrow(r,q,q/nb,ra(`data-t="${esc(r)}"`),`<span class="tdot" style="background:${TC(r)}"></span>`)).join('')}</div></div>`}
 function vMap(){const S=mstats();
  return `<div class="mapw"><div class="seg" id="mmode" style="margin:0 0 10px;flex:none">${[['cellar','Cellar'],['tasted','Tasted']].map(([k,l])=>`<button class="${mmode==k?'on':''}" onclick="setMM('${k}')">${l}</button>`).join('')}</div><div class="mapbox" id="mapbox"><svg id="msvg" viewBox="0 0 ${MW} ${MH}" preserveAspectRatio="xMidYMid meet"><g id="mg" style="transform:translate(${mv.x}px,${mv.y}px) scale(${mv.k})">${Object.entries(GEO).map(([n,d])=>{const o=S.c[n];return `<path d="${d}" data-c="${esc(n)}" class="${o?'has':''}${msel==n?' sel':''}"${o?` style="fill-opacity:${(.45+.55*o.bottles/S.max).toFixed(2)}"`:''}/>`}).join('')}</g><g id="mp" class="h">${pinsHTML(S)}</g></svg>${msel?'<button class="mback" onclick="selC(\'\')">‹ All countries</button>':''}</div><div class="mmet" id="mmet"></div><div class="mtr" id="mtc"></div><div class="mtr" id="mtt"></div><div class="mlist" id="mlist">${vMapList(S)}</div></div>`}
-function syncIns(anim){const l=$('#mlist');if(!l)return;const st=l.querySelector('.mdup .mstats'),cols=[...l.querySelectorAll('.mgt .mcol')];
- const put=(id,h)=>{const e=$(id);if(!e)return;e.innerHTML=h;if(anim&&e.animate)e.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:320,easing:'cubic-bezier(.22,.9,.3,1)'})};
+function syncIns(){const l=$('#mlist');if(!l)return;const st=l.querySelector('.mdup .mstats'),cols=[...l.querySelectorAll('.mgt .mcol')];
+ const put=(id,h)=>{const e=$(id);if(e)e.innerHTML='<div class="tin">'+h+'</div>'};
  put('#mmet',st?st.outerHTML:'');put('#mtc',cols[0]?cols[0].innerHTML:'');put('#mtt',cols[1]?cols[1].innerHTML:'')}
+function mapSwap(dir,fn){const ids=['#mlist','#mmet','#mtc','#mtt'],els=()=>ids.map(i=>$(i+' .tin')).filter(Boolean);
+ if(!dir||!els().length||!els()[0].animate){fn();return}
+ const px=56,os=els().map(e=>e.animate([{transform:'none',opacity:1},{transform:`translateX(${-dir*px}px)`,opacity:0}],{duration:170,easing:'ease-in',fill:'forwards'}));
+ os[0].onfinish=()=>{os.forEach(o=>o.cancel());fn();els().forEach(e=>e.animate([{transform:`translateX(${dir*px}px)`,opacity:0},{transform:'none',opacity:1}],{duration:340,easing:'cubic-bezier(.22,.9,.3,1)'}))}}
 function mapMT(){const w=$('.mapw');if(w)document.documentElement.style.setProperty('--mt',Math.round(w.getBoundingClientRect().top+(document.body.scrollTop||0))+'px')}
 addEventListener('resize',()=>{if(tab==='map')mapMT()});
 function vis(){const s=$('#msvg'),r=s&&s.getBoundingClientRect();if(!r||!r.width)return null;const sc=Math.min(MW/r.width,MH/r.height);return[r.width*sc,r.height*sc]}
@@ -1228,10 +1239,7 @@ function zoomTo(p){const bs=[],t=document.createElementNS('http://www.w3.org/200
 function mapUpdate(dir){const S=mstats(),l=$('#mlist'),bx=$('#mapbox');
  if(bx){const b=bx.querySelector('.mback'),has=!!msel;if(has&&!b)bx.insertAdjacentHTML('beforeend','<button class="mback" onclick="selC(\'\')">‹ All countries</button>');else if(!has&&b)b.remove()}
  document.querySelectorAll('#mg path').forEach(p=>p.classList.toggle('sel',p.dataset.c==msel));placePins(false);
- if(!l)return;const apply=()=>{l.innerHTML=vMapList(S);l.scrollTop=0;syncIns(1)};
- if(!dir||!l.animate){apply();return}
- const o=l.animate([{transform:'none',opacity:1},{transform:`translateX(${-dir*24}%)`,opacity:0}],{duration:130,easing:'ease-in',fill:'forwards'});
- o.onfinish=()=>{o.cancel();apply();l.animate([{transform:`translateX(${dir*24}%)`,opacity:0},{transform:'none',opacity:1}],{duration:300,easing:'cubic-bezier(.22,.9,.3,1)'})}}
+ if(!l)return;mapSwap(dir,()=>{l.innerHTML=vMapList(S);l.scrollTop=0;syncIns()})}
 function selC(n){const was=msel;msel=(!n||msel==n)?null:n;mapUpdate(!was&&msel?1:was&&!msel?-1:was&&msel&&was!=msel?1:0);const p=msel&&GEO[msel]&&document.querySelector('#mg path[data-c="'+CSS.escape(msel)+'"]');if(p)zoomTo(p);else if(!msel)resetMV()}
 function mzoom(f){const k=Math.max(1,Math.min(14,mv.k*f)),cx=MW/2,cy=MH/2;mv.x=cx-(cx-mv.x)*(k/mv.k);mv.y=cy-(cy-mv.y)*(k/mv.k);mv.k=k;applyMV(true)}
 function bindMap(){const box=$('#mapbox'),svg=$('#msvg');if(!box)return;if(!mvSet){mv=homeMV();mvSet=true}applyMV(false);
