@@ -151,10 +151,10 @@ nav{bottom:max(calc(env(safe-area-inset-bottom,0px) + 2px),8px)}
 .mlist .card.sc b{font-weight:400}
 .mlist .pt,.mlist .mgt .mcol{display:block;background:var(--card);border:1px solid var(--line);border-radius:22px;margin:0 0 12px;padding:0 0 6px}
 .mlist .mgt{display:block}
-.mlist .pt h2,.mlist .mgt .mcol h2{margin:0;padding:14px calc(100%/6) 8px}
-.mlist .tsc{display:block;max-height:238px;overflow-y:auto;scrollbar-width:none;margin:0 calc(100%/6)}
+.mlist .pt h2,.mlist .mgt .mcol h2{margin:0;padding:14px 18px 8px}
+.mlist .tsc{display:block;max-height:238px;overflow-y:auto;scrollbar-width:none;margin:0}.mlist.rz{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22px);mask-image:linear-gradient(to bottom,transparent 0,#000 22px)}
 .mlist .tsc::-webkit-scrollbar{display:none}
-.mlist .pt .mrow,.mlist .mgt .mcol .mrow{background:none;border:0;border-radius:0;margin:0;padding:10px 0}
+.mlist .pt .mrow,.mlist .mgt .mcol .mrow{background:none;border:0;border-radius:0;margin:0;padding:10px 18px}
 }
 }
 .mrow{border:0;border-bottom:1px solid var(--line);border-radius:0;margin:0;padding:10px 14px}
@@ -1295,13 +1295,17 @@ function zoomTo(p){const bs=[],t=document.createElementNS('http://www.w3.org/200
  const m=bs.reduce((a,b)=>b.a>a.a?b:a),L=Math.max(m.w,m.h);let x0=m.x,y0=m.y,x1=m.x+m.w,y1=m.y+m.h;
  bs.forEach(b=>{if(Math.hypot(b.x+b.w/2-m.x-m.w/2,b.y+b.h/2-m.y-m.h/2)<=L*1.2+10){x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.w);y1=Math.max(y1,b.y+b.h)}});
  const v=vis()||[MW,MH],w=x1-x0,h=y1-y0,k=Math.max(1,Math.min(12,.7*Math.min(v[0]/w,v[1]/h)));animMV({k,x:MW/2-k*(x0+w/2),y:MH/2-k*(y0+h/2)},900)}
+
+(function(){let held=null;const rel=()=>{if(held){held.style.overflowY='';held=null}};
+ document.addEventListener('touchstart',e=>{rel();const t=e.target.closest&&e.target.closest('.tsc');if(!t)return;const r=t.getBoundingClientRect(),x=e.touches[0].clientX;if(x<r.left+r.width/6||x>r.right-r.width/6){t.style.overflowY='hidden';held=t}},{passive:true});
+ ['touchend','touchcancel'].forEach(n=>document.addEventListener(n,()=>setTimeout(rel,60),{passive:true}))})();
 let mapTk=0;const DT=()=>matchMedia('(min-width:1000px) and (hover:hover) and (pointer:fine)').matches;
 function mapRise(l){const tin=l.querySelector('.tin');if(!tin||!tin.animate)return;[...tin.children].filter(x=>!x.classList.contains('mdup')||x.classList.contains('mgt')).forEach((x,i)=>{if(x.classList.contains('ttl'))x.animate([{opacity:0,transform:'translateY(-46px)'},{opacity:1,transform:'none'}],{duration:900,easing:'cubic-bezier(.22,.9,.3,1)',fill:'backwards'});else x.animate([{opacity:0,transform:'translateY(-40px)'},{opacity:1,transform:'none'}],{duration:760,delay:160+i*90,easing:'cubic-bezier(.22,.9,.3,1)',fill:'backwards'})})}
 function mapUpdate(dir){const S=mstats(),l=$('#mlist'),bx=$('#mapbox');
  if(bx){const b=bx.querySelector('.mback'),has=!!msel;if(has&&!b)bx.insertAdjacentHTML('beforeend','<button class="mback" onclick="selC(\'\')">‹ All countries</button>');else if(!has&&b)b.remove()}
  document.querySelectorAll('#mg path').forEach(p=>p.classList.toggle('sel',p.dataset.c==msel));placePins(false);
- mcoUpdate(S,true);if(!l)return;const ph=!DT(),tk=++mapTk,go=()=>{if(tk!==mapTk)return;mapSwap(ph?0:dir,()=>{l.innerHTML=vMapList(S);l.scrollTop=0;syncIns();mempty(S);if(ph&&dir)mapRise(l)})},tin=l.querySelector('.tin');
- if(ph&&dir&&tin&&tin.animate){const E=[...tin.children].filter(x=>!x.classList.contains('mdup')||x.classList.contains('mgt'));if(E.length){const A=E.map((x,i)=>x.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(-34px)'}],{duration:380,delay:i*40,easing:'cubic-bezier(.5,0,.8,.4)',fill:'forwards'}));A[A.length-1].onfinish=go;return}}
+ mcoUpdate(S,true);if(!l)return;const ph=!DT(),tk=++mapTk,rz=()=>{l.classList.add('rz');clearTimeout(l._rz);l._rz=setTimeout(()=>l.classList.remove('rz'),2000)},go=()=>{if(tk!==mapTk)return;mapSwap(ph?0:dir,()=>{l.innerHTML=vMapList(S);l.scrollTop=0;syncIns();mempty(S);if(ph&&dir)mapRise(l)})},tin=l.querySelector('.tin');
+ if(ph&&dir&&tin&&tin.animate){const E=[...tin.children].filter(x=>!x.classList.contains('mdup')||x.classList.contains('mgt'));if(E.length){rz();const A=E.map((x,i)=>x.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(-34px)'}],{duration:380,delay:i*40,easing:'cubic-bezier(.5,0,.8,.4)',fill:'forwards'}));A[A.length-1].onfinish=go;return}}
  go()}
 function selC(n){const was=msel;msel=(!n||msel==n)?null:n;mapUpdate(!was&&msel?1:was&&!msel?-1:was&&msel&&was!=msel?1:0);const p=msel&&GEO[msel]&&document.querySelector('#mg path[data-c="'+CSS.escape(msel)+'"]');if(p)zoomTo(p);else if(!msel)resetMV()}
 function mzoom(f){const k=Math.max(1,Math.min(14,mv.k*f)),cx=MW/2,cy=MH/2;mv.x=cx-(cx-mv.x)*(k/mv.k);mv.y=cy-(cy-mv.y)*(k/mv.k);mv.k=k;applyMV(true)}
