@@ -1,0 +1,10 @@
+.git
+.gitignore
+.assetsignore
+node_modules
+src
+o20.txt
+package.json
+package-lock.json
+README.md
+wrangler.jsonc
