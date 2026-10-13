@@ -244,7 +244,7 @@ input[type=date]{accent-color:var(--acc);color-scheme:light dark}.mrow[data-t]{c
 .sw .del{position:absolute;left:0;top:0;bottom:0;width:88px;background:none;border:0;color:#fff;visibility:hidden;display:flex;align-items:center;justify-content:center;border-radius:0}
 .sw.openL,.sw.dragL,.sw.dying{background:#e0262f}.sw.openL .del,.sw.dragL .del{visibility:visible}.sw.dragL .act{visibility:hidden}
 .dbtn.armed{background:#e0262f;color:#fff;border-color:#e0262f}
-.calp{position:fixed;z-index:12;padding:12px;border-radius:20px;background:var(--glass2);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);border:1px solid var(--gb);box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.calp{box-sizing:border-box;position:fixed;z-index:12;padding:12px;border-radius:20px;background:var(--glass2);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);border:1px solid var(--gb);box-shadow:0 10px 30px rgba(0,0,0,.2)}
 .calh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.calh b{font-weight:600}
 .calh button{width:34px;height:34px;padding:0;border-radius:50%;border:0;background:none;color:var(--acc);font-size:calc(22px*var(--ts));line-height:1}.calh button:disabled{opacity:.3}
 .calg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}.cdh{font-size:calc(11px*var(--ts));color:var(--mut);padding:4px 0}
@@ -927,13 +927,14 @@ let calS=null;
 const POPKF=[{opacity:0,transform:'scale(.55)'},{opacity:1,transform:'scale(1.08)',offset:.5},{opacity:1,transform:'scale(.97)',offset:.75},{opacity:1,transform:'none'}];
 const POPIN=d=>{if(d.animate)d._a=d.animate(POPKF,{duration:820,easing:'cubic-bezier(.3,.9,.4,1)',fill:'both'})};
 const POPKR=[{opacity:1,transform:'none',easing:'ease-out'},{opacity:1,transform:'scale(.93)',offset:.22,easing:'ease-out'},{opacity:1,transform:'scale(1.12)',offset:.5,easing:'cubic-bezier(.5,0,.9,.4)'},{opacity:1,transform:'scale(0)'}];
-function popOut(el){if(!el||el.dataset.x)return;el.dataset.x=1;el.id='';el.style.pointerEvents='none';if(!el.animate){el.remove();return}if(el._a)try{el._a.cancel()}catch(e){}
+function popOut(el){if(!el||el.dataset.x)return;el.dataset.x=1;const isCal=el.classList.contains('calp');el.id='';el.style.pointerEvents='none';if(!el.animate){el.remove();return}if(el._a)try{el._a.cancel()}catch(e){}
+ if(isCal){el.animate([{opacity:1,transform:'none'},{opacity:0,transform:`translateY(${el.dataset.dn==='0'?10:-10}px)`}],{duration:200,easing:'ease-in',fill:'forwards'}).onfinish=()=>el.remove();return}
  el.animate(POPKR,{duration:400,fill:'forwards'}).onfinish=()=>el.remove()}
 function closePops(){['#vpop','#cpop','#cal','#dpop'].forEach(q=>{const e=$(q);if(e)popOut(e)});calS=null}
 function cal(id){const old=$('#cal');if(old){popOut(old);if(calS&&calS.id==id){calS=null;return}}const inp=$('#'+id),b=$('#'+id+'b');if(!inp)return;const[y,m]=(inp.value||today()).split('-').map(Number);calS={id,y,m};
- const d=document.createElement('div');d.id='cal';d.className='calp';document.body.appendChild(d);drawCal();const r=b.getBoundingClientRect(),W=Math.min(310,innerWidth-24),below=innerHeight-r.bottom-12,dn=below>350||below>r.top;
- d.style.width=W+'px';d.style.left=Math.max(12,Math.min(r.right-W,innerWidth-W-16))+'px';d.style.transformOrigin=(dn?'100% 0':'100% 100%');d.style[dn?'top':'bottom']=(dn?r.bottom+6:innerHeight-r.top+6)+'px';
- POPIN(d);
+ const d=document.createElement('div');d.id='cal';d.className='calp';document.body.appendChild(d);drawCal();const vv=window.visualViewport,vw=vv?vv.width:innerWidth,ol=vv?vv.offsetLeft:0,r=b.getBoundingClientRect(),W=Math.min(334,vw-24),below=innerHeight-r.bottom-12,dn=below>350||below>r.top;
+ d.style.width=W+'px';d.style.left=Math.round(ol+(vw-W)/2)+'px';d.style[dn?'top':'bottom']=(dn?r.bottom+6:innerHeight-r.top+6)+'px';d.dataset.dn=dn?1:0;
+ if(d.animate)d.animate([{opacity:0,transform:`translateY(${dn?-14:14}px)`},{opacity:1,transform:'none'}],{duration:320,easing:'cubic-bezier(.22,.9,.3,1)',fill:'backwards'});
  d.onclick=e=>{const nv=e.target.closest('[data-nav]');if(nv){let yy=calS.y,mm=calS.m+ +nv.dataset.nav;if(mm<1){mm=12;yy--}if(mm>12){mm=1;yy++}calS.y=yy;calS.m=mm;drawCal();return}
   const dd=e.target.closest('[data-d]');if(dd&&!dd.classList.contains('dis')){calS.sel=dd.dataset.d;drawCal();return}if(e.target.closest('[data-clr]')){setD('');return}if(e.target.closest('[data-ok]')){const i=$('#'+calS.id);setD(calS.sel!==undefined?calS.sel:(i?i.value:''))}}}
 function setD(v){const i=$('#'+calS.id),b=$('#'+calS.id+'b');if(i)i.value=v;if(b)b.textContent=fmtD(v);const c=$('#cal');if(c)popOut(c);calS=null}
@@ -950,7 +951,7 @@ function drawCal(){const d=$('#cal');if(!d||!calS)return;const{y,m,id}=calS,t=to
  if(!d.querySelector('.calg')){d.innerHTML=`<div class="calh"></div><div class="calg"></div><div class="calf" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;align-items:center"><button class="t" data-clr="1" style="grid-column:1;justify-self:start;padding:0;margin:0 0 0 2px;height:36px">Clear</button><input class="cdt" id="cdt" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="Type a date" aria-label="Type a date" style="grid-column:2/7"><button class="plus" data-ok="1" aria-label="Confirm date" style="grid-column:7;justify-self:center;width:36px;height:36px;padding:0"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></div>`;
   const ti=d.querySelector('#cdt');ti.addEventListener('input',()=>{const iso=parseD(ti.value);ti.classList.toggle('bad',!!ti.value.trim()&&!iso);if(iso){const[yy,mm]=iso.split('-').map(Number);calS.y=yy;calS.m=mm;calS.sel=iso;drawCal()}});
   ti.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const iso=parseD(ti.value);if(iso)setD(iso);else ti.classList.add('bad')}});
-  ti.addEventListener('focus',()=>{[200,450,800].forEach(ms=>setTimeout(calFit,ms))})}
+  ti.addEventListener('focus',()=>{calS.typing=true;[200,450,800,1200].forEach(ms=>setTimeout(calFit,ms))});ti.addEventListener('blur',()=>{setTimeout(()=>{if(calS)calS.typing=false},300)})}
  let g='';['S','M','T','W','T','F','S'].forEach(x=>g+=`<span class="cdh">${x}</span>`);for(let i=0;i<first;i++)g+='<span></span>';
  for(let k=1;k<=n;k++){const ds=`${y}-${String(m).padStart(2,'0')}-${String(k).padStart(2,'0')}`;g+=`<button class="cd${ds==sel?' sel':''}${ds==t?' td':''}${ds>t?' dis':''}" data-d="${ds}">${k}</button>`}
  for(let i=first+n;i<42;i++)g+='<span></span>';
@@ -978,7 +979,7 @@ function curPop(i){const old=$('#cpop');if(old){popOut(old);return}const b=$('#l
  d.style.cssText=`position:fixed;z-index:12;left:${left}px;top:${top}px;width:${W}px;max-height:${H}px;transform-origin:0 0`;document.body.appendChild(d);POPIN(d);d.addEventListener('touchmove',e=>{if(d.scrollHeight<=d.clientHeight+1)e.preventDefault()},{passive:false});
  d._pos=()=>{const q=b.getBoundingClientRect();if(q.bottom<70||q.top>innerHeight-90){popOut(d);return}d.style.left=Math.max(12,Math.min(q.right+6,innerWidth-W-12))+'px';d.style.top=Math.max(92,Math.min(q.top-6,innerHeight-H-110))+'px'};
  d.onclick=e=>{const v=e.target.dataset?e.target.dataset.c:undefined;if(v===undefined)return;popOut(d);lotCur(i,v)};const x=d.querySelector('.sel');if(x)d.scrollTop=Math.max(0,x.offsetTop-60)}
-document.addEventListener('scroll',e=>{const t=e.target&&e.target.nodeType===1?e.target:null,c=$('#cpop');if(c&&c._pos&&!(t&&c.contains(t)))c._pos();const k=$('#cal');if(k&&!(t&&k.contains(t))){popOut(k);calS=null}},true);
+document.addEventListener('scroll',e=>{const t=e.target&&e.target.nodeType===1?e.target:null,c=$('#cpop');if(c&&c._pos&&!(t&&c.contains(t)))c._pos();const k=$('#cal');if(k&&!(t&&k.contains(t))&&!(calS&&calS.typing)){popOut(k);calS=null}},true);
 function lotCur(i,v){grab();const l=cur.lots[i];if(v=='__o')l.addCur=true;else{l.cur=v;delete l.addCur;l.usdEst=false;l.usdManual=false;l.usd=''}render()}
 function addCur(i){grab();const l=cur.lots[i],c=($('#ln'+i).value||'').trim().toUpperCase();if(!/^[A-Z]{3}$/.test(c)){msg='Enter a 3-letter currency code, like AUD.';render();return}if(!CUR.includes(c)&&!xcur.includes(c))xcur.push(c);l.cur=c;delete l.addCur;l.usdEst=false;save();render()}
 function addLot(){const L=$('#lots'),T=L&&L.querySelector('.lt');if(L&&L.dataset.anim)return;grab();cur.lots.push({id:'l'+Date.now(),qty:1,cur:'USD',price:'',pdate:'',store:''});
