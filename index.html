@@ -498,7 +498,7 @@ body.lotkb #app{padding-bottom:calc(var(--lkp,340px) + 60px)!important}
  .dxt{display:inline-flex;align-items:center;gap:6px;color:var(--fg)}
  .dxt i{width:10px;height:10px;border-radius:50%;display:inline-block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
  /* map: map + metric column on top, three static trays underneath */
- .mapw{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:auto auto minmax(0,1fr);column-gap:20px;row-gap:14px;height:calc(100vh - var(--mt,76px) - 12px);align-items:start}
+ .mapw{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:auto auto minmax(0,1fr);column-gap:20px;row-gap:14px;height:calc(var(--mh,100vh) - var(--mt,76px) - 12px);align-items:start}
  .mapw>.seg{grid-column:1/3;grid-row:1;margin:0!important;align-self:stretch;min-height:64px}
  .mapw>.mapbox{grid-column:1/7;grid-row:2;height:clamp(230px,42vh,500px);aspect-ratio:auto}
  .mapw>.mmet{display:block;grid-column:3/7;grid-row:1;align-self:stretch;background:var(--card);border:1px solid var(--line);border-radius:22px;box-sizing:border-box;padding:0 8px}
@@ -521,7 +521,7 @@ body.lotkb #app{padding-bottom:calc(var(--lkp,340px) + 60px)!important}
  .mapw>.mlist{grid-column:1/3}.mapw>#mtc{grid-column:3/5}.mapw>#mtt{grid-column:5/7}
  .mapw .tin{padding:0 0 10px}
  .mapw .mlist h2,.mapw .mtr h2{position:sticky;top:0;z-index:2;margin:0;padding:14px 18px 8px;background:var(--card)}
- .mapw .mlist .mrow,.mapw .mtr .mrow{background:none;border-radius:0!important;padding:10px 18px}
+ .mapw .mlist .mrow,.mapw .mtr .mrow{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0!important;margin:0;padding:10px 18px}
  .mapw .mlist .mrow:last-child,.mapw .mtr .mrow:last-child{border-bottom:0}
  .mapw .mlist .empty,.mapw .mlist>.tin>div:not(.ttl):not(.card){padding-left:18px;padding-right:18px}
  .mlist .mdup{display:none}
@@ -1295,8 +1295,8 @@ function mapSwap(dir,fn){const ids=['#mlist','#mtc','#mtt'],els=()=>ids.flatMap(
  const first=els();if(!dir||!first.length||!first[0].animate){fn();bars();return}
  const px=56,os=first.map(e=>e.animate([{transform:'none',opacity:1},{transform:`translateX(${-dir*px}px)`,opacity:0}],{duration:170,easing:'ease-in',fill:'forwards'}));
  os[0].onfinish=()=>{os.forEach(o=>o.cancel());fn();bars();els().forEach(e=>e.animate([{transform:`translateX(${dir*px}px)`,opacity:0},{transform:'none',opacity:1}],{duration:340,easing:'cubic-bezier(.22,.9,.3,1)'}))}}
-function mapMT(){const w=$('.mapw');if(w)document.documentElement.style.setProperty('--mt',Math.round(w.getBoundingClientRect().top+(document.body.scrollTop||0))+'px')}
-addEventListener('resize',()=>{if(tab==='map')mapMT()});
+function mapMT(){const w=$('.mapw');if(w)document.documentElement.style.setProperty('--mh',(window.innerHeight||document.documentElement.clientHeight)+'px');if(w)document.documentElement.style.setProperty('--mt',Math.round(w.getBoundingClientRect().top+(document.body.scrollTop||0))+'px')}
+addEventListener('resize',()=>{if(tab==='map')mapMT()});addEventListener('orientationchange',()=>setTimeout(()=>{if(tab==='map')mapMT()},300));
 function vis(){const s=$('#msvg'),r=s&&s.getBoundingClientRect();if(!r||!r.width)return null;const sc=Math.min(MW/r.width,MH/r.height);return[r.width*sc,r.height*sc]}
 function clampMV(){mv.k=Math.max(1,Math.min(14,mv.k));const v=vis();if(!v)return;const x0=(MW-v[0])/2,y0=(MH-v[1])/2;mv.x=Math.min(x0,Math.max(x0+v[0]-MW*mv.k,mv.x));mv.y=Math.min(y0,Math.max(y0+v[1]-MH*mv.k,mv.y))}
 let mvSet=false;
