@@ -79,6 +79,17 @@ pu(/^Move (\d+) wines? to Recently deleted$/,function(m,n){return 'Mover '+w1(n,
 pu(/^‹ (.+)$/,function(m,x){var t=OL.t(x);return t===x?null:'‹ '+t});
 pu(/^(\d+) bottles? ready$/,function(m,n){return n+(+n===1?' lista':' listas')});
 
+d['Nothing tasted from here yet.']='Aún no has catado nada de aquí.';d['Not a drop from here — yet.']='Ni una gota de aquí… todavía.';
+pu(/^You haven't tasted any wines from (.+) yet\. Pick another country\.$/,function(m,c){return 'Aún no has catado ningún vino de '+OL.t(c)+'. Elige otro país.'});
+pu(/^You don't have any wines from (.+) in your cellar\. Pick another country, or add a bottle with the \+ button\.$/,function(m,c){return 'No tienes ningún vino de '+OL.t(c)+' en tu bodega. Elige otro país o añade una botella con el botón +.'});
+
+d['Select all']='Seleccionar todo';d['View all wines']='Ver todos los vinos';d['View all tastings']='Ver todas las catas';
+pu(/^View all wines from (.+)$/,function(m,c){return 'Ver todos los vinos de '+OL.t(c)});
+pu(/^View all tastings from (.+)$/,function(m,c){return 'Ver todas las catas de '+OL.t(c)});
+pu(/^(\d+) selected$/,function(m,n){return n+' seleccionado'+(+n===1?'':'s')});
+pu(/^You haven't tasted any wines from (.+) yet\. Tap another country\.$/,function(m,c){return 'Aún no has catado ningún vino de '+OL.t(c)+'. Toca otro país.'});
+pu(/^You don't have any wines from (.+) in your cellar\. Tap another country, or add a bottle with the \+ button\.$/,function(m,c){return 'No tienes ningún vino de '+OL.t(c)+' en tu bodega. Toca otro país o añade una botella con el botón +.'});
+
 L.f.pace1=function(pm,nb,sup){return 'A un ritmo de <b>'+pm+'</b> botella'+(pm=='1.0'?'':'s')+' al mes, tus '+nb+' botella'+(nb==1?'':'s')+' durarían aproximadamente <b>'+(sup>=24?(sup/12).toFixed(1)+' años':Math.round(sup)+' meses')+'</b>.'};
 L.f.pace2=function(bt,dr,net){return 'Lo que va de año has comprado <b>'+bt+'</b> y bebido <b>'+dr+'</b>, '+(net>0?'así que la bodega ha crecido en <b>'+net+'</b>.':net<0?'así que la bodega ha disminuido en <b>'+(-net)+'</b>.':'así que se ha mantenido estable.')};
 })();
