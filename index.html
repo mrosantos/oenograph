@@ -1594,7 +1594,8 @@ function wineDetail(kind,id){
  const pid=(c&&c.photoId)||(inC&&inC.photoId)||(tasted.find(x=>x.photoId)||{}).photoId||o.photoId;
  const img=pid?`<img class="pmi" src="_blob/${pid}" alt="" onerror="this.remove()">`:'';
  const old=$('#pm');if(old)old.remove();const m=document.createElement('div');m.id='pm';let done=0;
- const fin=v=>{if(done)return;done=1;closePM();if(v==='cellar'){closeInfo();setTimeout(()=>{try{openW(inC)}catch(e){}},420)}else if(v==='tasting'){const tid=c?c.id:tasted[0].id;closeInfo();setTimeout(()=>{go('log');setTimeout(()=>openLogEdit(tid),380)},420)}};
+ const fin=v=>{if(done)return;done=1;closePM();if(v==='cellar'){closeInfo();setTimeout(()=>{try{openW(inC)}catch(e){}},420)}else if(v==='tasting'){const tid=c?c.id:tasted[0].id;const open=()=>{go('log');setTimeout(()=>openLogEdit(tid),380)};
+   const step=()=>{const vis=['#info2','#info'].some(q=>{const e=$(q);return e&&e.style.display==='block'});if(vis){closeInfo();setTimeout(step,480)}else open()};setTimeout(step,300)}};
  m.innerHTML=`<div class="ib"></div><div class="ic"><div class="ih"><i></i></div><div class="pmb">${img}<div class="pt">${t}</div><div class="ps">${sub}</div><div class="dtl">${rows}</div>${btn.map((x,i)=>`<button class="pmo${x[2]?' acc':''}" data-i="${i}">${x[1]}</button>`).join('')}<button class="pmo" data-i="-1">Close</button></div></div>`;
  document.body.appendChild(m);const ic=m.querySelector('.ic'),ib=m.querySelector('.ib');
  if(ic.animate){ic.animate([{transform:'translateY(100%)'},{transform:'none'}],{duration:600,easing:'cubic-bezier(.22,.8,.2,1)'});ib.animate([{opacity:0},{opacity:1}],{duration:400})}
