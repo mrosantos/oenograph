@@ -90,6 +90,13 @@ pu(/^(\d+) selected$/,function(m,n){return n+' seleccionado'+(+n===1?'':'s')});
 pu(/^You haven't tasted any wines from (.+) yet\. Tap another country\.$/,function(m,c){return 'Aún no has catado ningún vino de '+OL.t(c)+'. Toca otro país.'});
 pu(/^You don't have any wines from (.+) in your cellar\. Tap another country, or add a bottle with the \+ button\.$/,function(m,c){return 'No tienes ningún vino de '+OL.t(c)+' en tu bodega. Toca otro país o añade una botella con el botón +.'});
 
+d['Tasted on']='Catado el';d['Tastings']='Catas';d['Other tastings']='Otras catas';d['Where it is']='Dónde está';d['Average paid']='Precio medio pagado';d['Not tasted yet']='Aún sin catar';d['Not in your cellar']='No está en tu bodega';d['View in cellar']='Ver en la bodega';d['View tasting']='Ver cata';d['View latest tasting']='Ver la última cata';
+d['Top regions']='Regiones principales';d['Cellar age']='Edad de la bodega';
+pu(/^(\d+) times? · last (.+)$/,function(m,n,dt){return (+n===1?'1 vez':n+' veces')+' · última '+dt});
+pu(/^(\d+) · latest (.+)$/,function(m,n,dt){return n+' · última '+dt});
+pu(/^(\$[\d,.]+) per bottle$/,function(m,v){return v+' por botella'});
+pu(/^(\d+) bottles?$/,function(m,n){return n+(+n===1?' botella':' botellas')});
+
 L.f.pace1=function(pm,nb,sup){return 'A un ritmo de <b>'+pm+'</b> botella'+(pm=='1.0'?'':'s')+' al mes, tus '+nb+' botella'+(nb==1?'':'s')+' durarían aproximadamente <b>'+(sup>=24?(sup/12).toFixed(1)+' años':Math.round(sup)+' meses')+'</b>.'};
 L.f.pace2=function(bt,dr,net){return 'Lo que va de año has comprado <b>'+bt+'</b> y bebido <b>'+dr+'</b>, '+(net>0?'así que la bodega ha crecido en <b>'+net+'</b>.':net<0?'así que la bodega ha disminuido en <b>'+(-net)+'</b>.':'así que se ha mantenido estable.')};
 })();
