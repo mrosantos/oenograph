@@ -2,6 +2,8 @@
   "name": "wandering-feather-4999",
   "compatibility_date": "2026-10-01",
   "main": "server/worker.js",
+  // Keep the invite list (ALLOWED_EMAILS) set in the Cloudflare dashboard when the site redeploys.
+  "keep_vars": true,
   "assets": { "directory": "./", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
   "durable_objects": { "bindings": [{ "name": "USAGE", "class_name": "Usage" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Usage"] }]
