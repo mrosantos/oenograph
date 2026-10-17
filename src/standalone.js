@@ -47,6 +47,7 @@ const OENO=window.OENO={
   get email(){return user?user.email:''},
   get signedIn(){return !!user},
   hasKey:()=>!!LS.get('oenoKey'),
+  get hasServer(){return srvOK},
   async setKey(k){
     k=(k||'').trim();
     if(!/^sk-ant-/.test(k))throw new Error('That doesn’t look like an Anthropic key. It should start with sk-ant-');
@@ -58,7 +59,7 @@ const OENO=window.OENO={
     try{if(auth)await signOut(auth)}catch(e){}
     // Keep the local copy so nothing is lost if the cloud copy was never saved.
     // It is only cleared when a different account signs in.
-    LS.del('oenoLocal');homeTab();
+    LS.del('oenoLocal');LS.del('oenoSrv');homeTab();
     location.reload()
   },
   goLogin(){LS.del('oenoLocal');location.reload()},
@@ -75,7 +76,7 @@ const OENO=window.OENO={
       if(n)await b.commit();
     }
     await deleteUser(user);
-    DATA_KEYS.concat(['oenoUid','oenoLocal','oenoKey','oenoAIok']).forEach(LS.del);
+    DATA_KEYS.concat(['oenoUid','oenoLocal','oenoKey','oenoAIok','oenoSrv']).forEach(LS.del);
     try{await photoClear()}catch(e){}
     try{await terminate(fs);await clearIndexedDbPersistence(fs)}catch(e){}
     homeTab();location.reload();
@@ -85,9 +86,20 @@ const OENO=window.OENO={
 /* ---------- Claude (user's own key) ---------- */
 const MODELS={quick:'claude-haiku-4-5-20251001',default:'claude-sonnet-5-5',complex:'claude-opus-5-5'};
 const b64=async b=>(await toDataURL(b)).split(',')[1];
+// Claude via the owner's server, for invited accounts without their own key.
+let srvOK=LS.get('oenoSrv')==='1';
+async function checkServer(){
+  if(!user||navigator.onLine===false)return srvOK;
+  try{
+    const r=await Promise.race([fetch('/api/claude/status',{headers:{authorization:'Bearer '+await user.getIdToken()}}),timeout(5000)]);
+    srvOK=r.ok;
+    if(r.status===401||r.status===403||r.status===503||r.ok)LS.set('oenoSrv',srvOK?'1':'0');
+  }catch(e){}
+  return srvOK;
+}
 async function callClaude(input,opts={}){
-  const key=opts.key||LS.get('oenoKey');
-  if(!key)throw {code:'not_granted',message:'Add your Claude key in Settings first.'};
+  const key=opts.key||LS.get('oenoKey'),viaSrv=!key&&user&&srvOK;
+  if(!key&&!viaSrv)throw {code:'not_granted',message:'Add your Claude key in Settings first.'};
   let messages;
   if(Array.isArray(input))messages=input.map(m=>({role:m.role,content:m.content}));
   else{
@@ -98,6 +110,20 @@ async function callClaude(input,opts={}){
     messages=[{role:'user',content}];
   }
   let r;
+  if(viaSrv){
+    try{
+      r=await fetch('/api/claude?tier='+encodeURIComponent(opts.modelTier||'default')+'&max='+(opts.maxTokens||4096),{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+await user.getIdToken()},body:JSON.stringify(messages)});
+    }catch(e){throw {code:'network',message:'Couldn’t reach Claude. Check your connection.'}}
+    if(!r.ok){
+      let j={};try{j=await r.json()}catch(e){}
+      if(j.error==='daily_limit')throw {code:'rate_limited',message:j.message};
+      if(j.error==='not_invited'||j.error==='signin'){if(j.error==='not_invited')LS.set('oenoSrv','0');throw {code:'not_granted',message:j.message}}
+      if(r.status===429)throw {code:'rate_limited',message:'Claude is busy. Try again shortly.'};
+      throw {code:'error',message:(j.error&&j.error.message)||j.message||('Claude error '+r.status)};
+    }
+    const j=await r.json();
+    return {text:(j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join(''),truncated:j.stop_reason==='max_tokens'};
+  }
   try{
     r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{
       'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01',
@@ -125,7 +151,7 @@ async function aiConsent(){
   if(LS.get('oenoAIok')==='1')return;
   const ask=window.choose;
   if(typeof ask!=='function')return;
-  const v=await ask('Send to Claude?','To suggest pairings, drink windows and notes, Oenograph sends details of the wines involved (producer, name, vintage, region, grapes and similar) to Anthropic’s Claude, using your own key. When you scan a label, the photo is sent too. Your email, account and location are never shared.',[['ok','Allow',1],['no','Don’t allow']]);
+  const v=await ask('Send to Claude?','To suggest pairings, drink windows and notes, Oenograph sends details of the wines involved (producer, name, vintage, region, grapes and similar) to Anthropic’s Claude. When you scan a label, the photo is sent too. Your email, account and location are never shared.',[['ok','Allow',1],['no','Don’t allow']]);
   if(v!=='ok')throw {code:'declined',message:'Nothing was sent to Claude.'};
   LS.set('oenoAIok','1');
 }
@@ -289,7 +315,7 @@ function showGate(){
           const u=auth.currentUser,prev=LS.get('oenoUid');
           if(prev&&u&&prev!==u.uid){DATA_KEYS.forEach(LS.del);try{await photoClear()}catch(e){}}
           if(u)LS.set('oenoUid',u.uid);
-          LS.del('oenoLocal');homeTab();
+          LS.del('oenoLocal');LS.del('oenoSrv');homeTab();
           location.reload();
         }catch(e){X.textContent=ERR[e.code]||('Something went wrong ('+(e.code||e.message||'unknown')+').');B.disabled=false;window.__loggingIn=0}
       };
@@ -316,7 +342,8 @@ addEventListener('pageshow',e=>{if(e.persisted)location.reload()});
       onAuthStateChanged(auth,u=>{if(u&&!window.__loggingIn){LS.set('oenoUid',LS.get('oenoUid')||u.uid);homeTab();location.reload()}});
       await showGate();return} // page reloads after sign-in
     if(user&&!LS.get('oenoUid'))LS.set('oenoUid',user.uid);
-    const sample=LS.get('oenoKey')?makeSample():null,assets=makeAssets(),db=user?makeDb():null;
+    if(user&&!LS.get('oenoKey')){const known=LS.get('oenoSrv')!==null,p=checkServer();if(!known)await Promise.race([p,new Promise(r=>setTimeout(r,2500))])}
+    const sample=(LS.get('oenoKey')||(user&&srvOK))?makeSample():null,assets=makeAssets(),db=user?makeDb():null;
     const namespaces={
       user:user?{id:async()=>user.uid,isOwner:()=>true,canEdit:()=>true}:null,
       db,sample,downloads,assets

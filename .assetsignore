@@ -8,3 +8,5 @@ package.json
 package-lock.json
 README.md
 wrangler.jsonc
+server
+.wrangler
