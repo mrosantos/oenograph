@@ -2,8 +2,8 @@
 // It provides the same small "window.claude" surface the app was written against,
 // so the app code itself barely changes.
 import {initializeApp} from 'firebase/app';
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut} from 'firebase/auth';
-import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,doc,getDoc,getDocFromCache,setDoc,deleteDoc} from 'firebase/firestore';
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut,deleteUser,reauthenticateWithCredential,EmailAuthProvider} from 'firebase/auth';
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,doc,getDoc,getDocFromCache,setDoc,deleteDoc,collection,getDocs,writeBatch,terminate,clearIndexedDbPersistence} from 'firebase/firestore';
 
 const firebaseConfig={
   apiKey:"AIzaSyCrJ_OyhjxzG5rQa8gzwT2hM5u14FeJJzI",
@@ -59,7 +59,25 @@ const OENO=window.OENO={
     LS.del('oenoLocal');
     location.reload()
   },
-  goLogin(){LS.del('oenoLocal');location.reload()}
+  goLogin(){LS.del('oenoLocal');location.reload()},
+  // Permanently delete the signed-in account and everything stored for it.
+  async deleteAccount(password){
+    if(!user)throw {code:'no-user',message:'You are not signed in.'};
+    try{await reauthenticateWithCredential(user,EmailAuthProvider.credential(user.email,password||''))}
+    catch(e){throw {code:e.code||'auth',message:ERR[e.code]||'That password isn’t right.'}}
+    const uid=user.uid;
+    for(const sub of ['data','photos']){
+      const snap=await getDocs(collection(fs,'users',uid,sub));
+      let b=writeBatch(fs),n=0;
+      for(const d of snap.docs){b.delete(d.ref);if(++n===400){await b.commit();b=writeBatch(fs);n=0}}
+      if(n)await b.commit();
+    }
+    await deleteUser(user);
+    DATA_KEYS.concat(['oenoUid','oenoLocal','oenoKey','oenoAIok']).forEach(LS.del);
+    try{await photoClear()}catch(e){}
+    try{await terminate(fs);await clearIndexedDbPersistence(fs)}catch(e){}
+    location.reload();
+  }
 };
 
 /* ---------- Claude (user's own key) ---------- */
@@ -100,9 +118,18 @@ function parseJSON(t){
   if(a<0||z<a)throw {code:'parse',message:'Claude’s answer couldn’t be read. Try again.'};
   try{return JSON.parse(t.slice(a,z+1))}catch(e){throw {code:'parse',message:'Claude’s answer couldn’t be read. Try again.'}}
 }
+// Ask once before anything is sent to Anthropic (Apple guideline 5.1.2).
+async function aiConsent(){
+  if(LS.get('oenoAIok')==='1')return;
+  const ask=window.choose;
+  if(typeof ask!=='function')return;
+  const v=await ask('Send to Claude?','To suggest pairings, drink windows and notes, Oenograph sends details of the wines involved (producer, name, vintage, region, grapes and similar) to Anthropic’s Claude, using your own key. When you scan a label, the photo is sent too. Your email, account and location are never shared.',[['ok','Allow',1],['no','Don’t allow']]);
+  if(v!=='ok')throw {code:'declined',message:'Nothing was sent to Claude.'};
+  LS.set('oenoAIok','1');
+}
 function makeSample(){
-  const s=(i,o)=>callClaude(i,o||{});
-  s.json=async(i,o)=>parseJSON((await callClaude(i,o||{})).text);
+  const s=async(i,o)=>{await aiConsent();return callClaude(i,o||{})};
+  s.json=async(i,o)=>{await aiConsent();return parseJSON((await callClaude(i,o||{})).text)};
   s.limits=async()=>({images:{mediaTypes:['image/jpeg','image/png','image/gif','image/webp'],maxInputBytes:3500000}});
   return s;
 }
