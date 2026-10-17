@@ -1808,11 +1808,20 @@ function tabularLog(R){R=R.filter(r=>r.some(c=>String(c).trim()));const hi=R.sli
 async function blobData(id){try{const r=await fetch('_blob/'+id);if(r.ok){const b=await r.blob();return await new Promise(ok=>{const fr=new FileReader();fr.onload=()=>ok(fr.result);fr.onerror=()=>ok(null);fr.readAsDataURL(b)})}}catch(e){}
  try{const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src='_blob/'+id}),c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;c.getContext('2d').drawImage(im,0,0);return c.toDataURL('image/png')}catch(e){return null}}
 const pids=(...L)=>{const s=new Set();L.forEach(a=>(a||[]).forEach(b=>{if(b&&b.photoId)s.add(b.photoId)}));return[...s]};
+
+async function saveFile(name,blob){const dwn=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)};
+ if(HV.matches){dwn();return}
+ const f=(()=>{try{return new File([blob],name,{type:blob.type})}catch(e){return null}})(),can=f&&navigator.canShare&&navigator.canShare({files:[f]});
+ if(!can){dwn();return}
+ const v=await choose('Save file','Choose how to save it.',[['files','Save to Files',1],['share','Share…']]);
+ if(!v)throw{code:'declined'};
+ if(v==='files'){dwn();return}
+ try{await navigator.share({files:[f]})}catch(e){if(e&&e.name==='AbortError')throw{code:'declined'};dwn()}}
 async function exp(){if(!dl){toast('Saving files isn\'t available in this view.');return}
  try{const ids=pids(B,C,DEL,WL),photos={};let n=0,miss=0;for(const id of ids){toast('Packing photos… '+(++n)+' of '+ids.length,60000);const d=await blobData(id);if(d)photos[id]=d;else miss++}
   const t=new Date(),stamp=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
   toast('Preparing your backup…',60000);await new Promise(r=>setTimeout(r,30));
-  await dl.save({filename:'oenograph-backup-'+stamp+'.json',data:JSON.stringify({app:'oenograph',version:2,exported:t.toISOString(),bottles:B,consumed:C,deleted:DEL,wishlist:WL,picks:picks||[],xcur,rinfo:RI,places:PL,photos})});
+  await saveFile('oenograph-backup-'+stamp+'.json',new Blob([JSON.stringify({app:'oenograph',version:2,exported:t.toISOString(),bottles:B,consumed:C,deleted:DEL,wishlist:WL,picks:picks||[],xcur,rinfo:RI,places:PL,photos})],{type:'application/json'}));
   toast('Backup saved with '+(ids.length-miss)+' photo'+(ids.length-miss==1?'':'s')+(miss?' ('+miss+' couldn\'t be read)':'')+'.',4200)}
  catch(e){$('#toast').classList.remove('on');if(e&&e.code&&e.code!=='declined')toast('Couldn\'t save the backup.')}}
 
@@ -1854,7 +1863,7 @@ async function invPDF(){if(!dl){toast('Saving files isn\'t available in this vie
   out+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n'+off.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<< /Size '+(objs.length+1)+' /Root '+cat+' 0 R >>\nstartxref\n'+xr+'\n%%EOF';
   const u=new Uint8Array(out.length);for(let i=0;i<out.length;i++)u[i]=out.charCodeAt(i)&255;
   const t=new Date(),stamp=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
-  await dl.save({filename:'oenograph-inventory-'+stamp+'.pdf',data:new Blob([u],{type:'application/pdf'})});toast('Saved',2200)}
+  await saveFile('oenograph-inventory-'+stamp+'.pdf',new Blob([u],{type:'application/pdf'}));toast('Saved',2200)}
  catch(e){if(!(e&&e.code==='declined'))toast('Couldn\'t save the backup.');console.error(e)}}
 async function impJSON(f){let d;try{d=JSON.parse(await dec(f))}catch(e){toast('That file isn\'t a valid backup.');return}
  const bs=Array.isArray(d)?d:d&&d.bottles;if(!Array.isArray(bs)){toast('That file doesn\'t look like an Oenograph backup.');return}
