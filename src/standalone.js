@@ -20,6 +20,8 @@ const LS={
   set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},
   del:k=>{try{localStorage.removeItem(k)}catch(e){}}
 };
+// Start on the Cellar tab after signing in, signing out or creating an account.
+const homeTab=()=>{try{sessionStorage.setItem('oenoT','cellar')}catch(e){}};
 const timeout=(ms,msg)=>new Promise((_,no)=>setTimeout(()=>no(new Error(msg||'timeout')),ms));
 
 /* ---------- local photo store (IndexedDB), also read by the service worker ---------- */
@@ -56,7 +58,7 @@ const OENO=window.OENO={
     try{if(auth)await signOut(auth)}catch(e){}
     // Keep the local copy so nothing is lost if the cloud copy was never saved.
     // It is only cleared when a different account signs in.
-    LS.del('oenoLocal');
+    LS.del('oenoLocal');homeTab();
     location.reload()
   },
   goLogin(){LS.del('oenoLocal');location.reload()},
@@ -76,7 +78,7 @@ const OENO=window.OENO={
     DATA_KEYS.concat(['oenoUid','oenoLocal','oenoKey','oenoAIok']).forEach(LS.del);
     try{await photoClear()}catch(e){}
     try{await terminate(fs);await clearIndexedDbPersistence(fs)}catch(e){}
-    location.reload();
+    homeTab();location.reload();
   }
 };
 
@@ -276,7 +278,7 @@ function showGate(){
         try{await sendPasswordResetEmail(auth,E.value.trim());X.className='err ok';X.textContent='Reset link sent. Check your email.'}
         catch(e){X.textContent=ERR[e.code]||'Couldn’t send the reset email.'}
       };
-      g.querySelector('#gl').onclick=()=>{LS.set('oenoLocal','1');location.reload()};
+      g.querySelector('#gl').onclick=()=>{LS.set('oenoLocal','1');homeTab();location.reload()};
       g.querySelector('#gf').onsubmit=async ev=>{
         ev.preventDefault();X.className='err';X.textContent='';
         if(!E.value.trim()||!P.value){X.textContent='Enter your email and password.';return}
@@ -287,7 +289,7 @@ function showGate(){
           const u=auth.currentUser,prev=LS.get('oenoUid');
           if(prev&&u&&prev!==u.uid){DATA_KEYS.forEach(LS.del);try{await photoClear()}catch(e){}}
           if(u)LS.set('oenoUid',u.uid);
-          LS.del('oenoLocal');
+          LS.del('oenoLocal');homeTab();
           location.reload();
         }catch(e){X.textContent=ERR[e.code]||('Something went wrong ('+(e.code||e.message||'unknown')+').');B.disabled=false;window.__loggingIn=0}
       };
@@ -311,7 +313,7 @@ addEventListener('pageshow',e=>{if(e.persisted)location.reload()});
     user=await new Promise(ok=>{let d=0;const off=onAuthStateChanged(auth,u=>{if(!d){d=1;off();ok(u)}});setTimeout(()=>{if(!d){d=1;ok(auth.currentUser)}},5000)});
     if(!user&&!OENO.local){
       // If a saved sign-in turns up late, don't leave the login screen up.
-      onAuthStateChanged(auth,u=>{if(u&&!window.__loggingIn){LS.set('oenoUid',LS.get('oenoUid')||u.uid);location.reload()}});
+      onAuthStateChanged(auth,u=>{if(u&&!window.__loggingIn){LS.set('oenoUid',LS.get('oenoUid')||u.uid);homeTab();location.reload()}});
       await showGate();return} // page reloads after sign-in
     if(user&&!LS.get('oenoUid'))LS.set('oenoUid',user.uid);
     const sample=LS.get('oenoKey')?makeSample():null,assets=makeAssets(),db=user?makeDb():null;
