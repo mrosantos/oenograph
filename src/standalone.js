@@ -342,7 +342,7 @@ addEventListener('pageshow',e=>{if(e.persisted)location.reload()});
       onAuthStateChanged(auth,u=>{if(u&&!window.__loggingIn){LS.set('oenoUid',LS.get('oenoUid')||u.uid);homeTab();location.reload()}});
       await showGate();return} // page reloads after sign-in
     if(user&&!LS.get('oenoUid'))LS.set('oenoUid',user.uid);
-    if(user&&!LS.get('oenoKey')){const known=LS.get('oenoSrv')!==null,p=checkServer();if(!known)await Promise.race([p,new Promise(r=>setTimeout(r,2500))])}
+    if(user&&!LS.get('oenoKey')){const p=checkServer();if(LS.get('oenoSrv')!=='1')await Promise.race([p,new Promise(r=>setTimeout(r,2500))])}
     const sample=(LS.get('oenoKey')||(user&&srvOK))?makeSample():null,assets=makeAssets(),db=user?makeDb():null;
     const namespaces={
       user:user?{id:async()=>user.uid,isOwner:()=>true,canEdit:()=>true}:null,
