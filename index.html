@@ -146,7 +146,7 @@ nav{bottom:max(calc(env(safe-area-inset-bottom,0px) + 2px),8px)}
 .stt{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 4px;min-width:0;overflow:hidden;white-space:nowrap}
 .stt .ov{font:600 calc(18px*var(--ts)) Georgia,serif;display:flex;justify-content:center}
 .stt .ml{font-size:calc(11px*var(--ts));color:var(--mut)}
-.ov{overflow:hidden;height:1.4em;line-height:1.4em}.odc{display:block;height:1.4em;overflow:hidden}.odw{display:block;transition:transform .95s cubic-bezier(.22,.9,.3,1)}.odw i{display:block;font-style:normal;height:1.4em;line-height:1.4em;text-align:center}.ods{display:block;height:1.4em;line-height:1.4em}
+.ov{overflow:hidden;height:1.4em;line-height:1.4em}.odc{display:block;height:1.4em;overflow:hidden}.odw{display:block;transition:transform 1.25s cubic-bezier(.22,.9,.3,1)}.odw i{display:block;font-style:normal;height:1.4em;line-height:1.4em;text-align:center}.ods{display:block;height:1.4em;line-height:1.4em}
 .mlist{margin-top:-12px;padding-top:22px}.mapw>.mapbox{z-index:3}.mlist .card.sc{margin:0 0 12px!important}.mlist .ttl{margin-bottom:12px!important}
 .mlist>.tin>.mdup:not(.mgt){display:none}
 .mlist .card.sc b{font-weight:400}
@@ -539,7 +539,7 @@ body.lotkb #app{padding-bottom:calc(var(--lkp,340px) + 60px)!important}
  .stt{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 6px;min-width:0;overflow:hidden;white-space:nowrap}
  .stt .ov{font:600 calc(24px*var(--ts)) Georgia,serif;display:flex;justify-content:center}
  .stt .ml{font-size:calc(12px*var(--ts));color:var(--mut);margin-top:0}
- .ov{overflow:hidden;height:1.4em;line-height:1.4em}.odc{display:block;height:1.4em;overflow:hidden}.odw{display:block;transition:transform .95s cubic-bezier(.22,.9,.3,1)}.odw i{display:block;font-style:normal;height:1.4em;line-height:1.4em;text-align:center}.ods{display:block;height:1.4em;line-height:1.4em}
+ .ov{overflow:hidden;height:1.4em;line-height:1.4em}.odc{display:block;height:1.4em;overflow:hidden}.odw{display:block;transition:transform 1.25s cubic-bezier(.22,.9,.3,1)}.odw i{display:block;font-style:normal;height:1.4em;line-height:1.4em;text-align:center}.ods{display:block;height:1.4em;line-height:1.4em}
  .mco{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:14px;pointer-events:none;z-index:2}
  .mcn,.mcv{pointer-events:auto;display:flex;align-items:center;background:var(--glass);-webkit-backdrop-filter:var(--bf);backdrop-filter:var(--bf);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--hl),0 6px 20px rgba(0,0,0,.08)}
  .mcn{gap:10px;padding:8px 20px 8px 12px;border-radius:26px;font:400 calc(28px*var(--ts)) Italiana,Georgia,serif;letter-spacing:.3px;line-height:1.2}
@@ -1290,6 +1290,7 @@ function setMM(m){if(m===mmode||mmB)return;mmB=1;const d=m==='tasted'?1:-1;mmode
  document.querySelectorAll('#mg path').forEach(p=>{const o=S.c[p.dataset.c];p.classList.toggle('has',!!o);p.style.fillOpacity=o?(.45+.55*o.bottles/S.max).toFixed(2):''});
  if(g){g.classList.add('h');setTimeout(()=>{g.innerHTML=pinsHTML(S);placePins(false)},320)}
  if(!l){mmB=0;return}
+ {const tmp=document.createElement('div');tmp.innerHTML=vMapList(S);stL(tmp)}
  mcoUpdate(S,true,1);mapSwap(d,()=>{l.innerHTML=vMapList(S);l.scrollTop=0;syncIns();mempty(S);mmB=0})}
 
 function mstats(){const c={},g={},t={};let max=1;const T=mmode==='tasted';
@@ -1328,7 +1329,7 @@ function mcoUpdate(S,anim,sw){const e=$('#mco');if(!e)return;
 function odo(el,val){const s=String(val),old=el._s;if(old===s)return;el._s=s;const chars=[...s],pr=old?[...old].reverse():[];
  const dig=c=>/^\d$/.test(c),W=Array.from({length:20},(_,d)=>`<i>${d%10}</i>`).join('');
  el.innerHTML=chars.map((c,i)=>{const k=chars.length-1-i,o=pr[k];if(!dig(c))return`<span class="ods">${esc(c)}</span>`;const from=old?(dig(o)?+o:0):+c;const to=old?(+c>from?+c:+c+10):+c;return`<span class="odc"><span class="odw" data-to="${to}" data-k="${k}" style="transition:none;transform:translateY(${-from*1.4}em)">${W}</span></span>`}).join('');
- if(!old)return;void el.offsetWidth;el.querySelectorAll('.odw').forEach(w=>{w.style.transition='';w.style.transitionDelay=(+w.dataset.k*70)+'ms';w.style.transform=`translateY(${-w.dataset.to*1.4}em)`})}
+ if(!old)return;void el.offsetWidth;el.querySelectorAll('.odw').forEach(w=>{w.style.transition='';w.style.transitionDelay=(+w.dataset.k*90)+'ms';w.style.transform=`translateY(${-w.dataset.to*1.4}em)`})}
 function fadeTxt(e,t){if(!e.animate){e.textContent=t;return}const o=e.animate([{opacity:1},{opacity:0}],{duration:140,fill:'forwards'});o.onfinish=()=>{e.textContent=t;o.cancel();e.animate([{opacity:0},{opacity:1}],{duration:300})}}
 function statsUpdate(L){const m=$('#mmet');if(!m)return;let w=m.querySelector('.mst');
  if(w&&w.children.length!==L.length&&!w.dataset.rm){const n=w.children.length;
@@ -1339,8 +1340,9 @@ function statsUpdate(L){const m=$('#mmet');if(!m)return;let w=m.querySelector('.
   return}
  if(!w||w.children.length!==L.length){const had=!!w;m.innerHTML=`<div class="mst" style="--n:${L.length}">`+L.map(()=>'<div class="stt"><b class="ov"></b><span class="ml"></span></div>').join('')+'</div>';w=m.firstChild;[...w.children].forEach((t,i)=>{const o=t.querySelector('.ov');if(had)odo(o,String(L[i].v).replace(/\d/g,'0'));odo(o,L[i].v);t.querySelector('.ml').textContent=L[i].l});return}
  [...w.children].forEach((t,i)=>{odo(t.querySelector('.ov'),L[i].v);const ml=t.querySelector('.ml');if(ml.textContent!==L[i].l)fadeTxt(ml,L[i].l)})}
+function stL(l){let L=[...l.querySelectorAll('.mdup .mstats .tile')].map(t=>({v:t.querySelector('b').textContent,l:t.querySelector('span').textContent}));if(!L.length&&msel){const T=mmode==='tasted';L=[{v:'0',l:T?'tasted':'bottles'},{v:'0',l:'wines'},{v:'0',l:'regions'}];if(!T)L.push({v:'—',l:'invested'})}statsUpdate(L)}
 function syncIns(){const l=$('#mlist');if(!l)return;const cols=[...l.querySelectorAll('.mgt .mcol')];
- {let L=[...l.querySelectorAll('.mdup .mstats .tile')].map(t=>({v:t.querySelector('b').textContent,l:t.querySelector('span').textContent}));if(!L.length&&msel){const T=mmode==='tasted';L=[{v:'0',l:T?'tasted':'bottles'},{v:'0',l:'wines'},{v:'0',l:'regions'}];if(!T)L.push({v:'—',l:'invested'})}statsUpdate(L)}
+ stL(l);
  const put=(id,h)=>{const e=$(id);if(e)e.innerHTML='<div class="tin">'+h+'</div>'};
  put('#mtc',cols[0]?cols[0].innerHTML:'');put('#mtt',cols[1]?cols[1].innerHTML:'')}
 function mapSwap(dir,fn){const ids=['#mlist','#mtc','#mtt'],els=()=>ids.flatMap(i=>{const t=$(i+' .tin');return t?[...t.children].flatMap(x=>x.tagName==='H2'||x.classList.contains('ttl')||x.classList.contains('card')||x.classList.contains('mdup')?[]:(x.classList.contains('pt')||x.classList.contains('tsc'))?[...x.children].flatMap(function f(y){return y.tagName==='H2'?[]:y.classList.contains('tsc')?[...y.children].flatMap(f):y.classList.contains('mrow')?[y.querySelector('.row')]:[y]}):x.classList.contains('mrow')?[x.querySelector('.row')]:[x]):[]});
