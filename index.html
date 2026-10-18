@@ -1330,10 +1330,21 @@ function mcoUpdate(S,anim,sw){const e=$('#mco');if(!e)return;
  const t=++mcoT;e.getAnimations&&e.getAnimations().forEach(a=>a.cancel());
  if(!msel){if(!anim||!e.animate||!e.innerHTML){e.innerHTML='';return}const a=e.animate([{opacity:1},{opacity:0}],{duration:320,easing:'ease-out',fill:'forwards'});a.onfinish=()=>{if(t===mcoT){e.innerHTML='';a.cancel()}};return}
  e.innerHTML=mcoHTML(S);if(anim&&e.animate)[...e.children].forEach((c,i)=>c.animate([{transform:'translateY(110px)',opacity:0},{transform:'none',opacity:1}],{duration:560,delay:i*70,easing:'cubic-bezier(.3,1.3,.5,1)',fill:'backwards'}))}
-function odo(el,val){const s=String(val),old=el._s;if(old===s)return;el._s=s;const chars=[...s],pr=old?[...old].reverse():[];
- const dig=c=>/^\d$/.test(c),W=Array.from({length:20},(_,d)=>`<i>${d%10}</i>`).join('');
- el.innerHTML=chars.map((c,i)=>{const k=chars.length-1-i,o=pr[k];if(!dig(c))return`<span class="ods">${esc(c)}</span>`;const from=old?(dig(o)?+o:0):+c;const to=old?(+c>from?+c:+c+10):+c;return`<span class="odc"><span class="odw" data-to="${to}" data-k="${k}" style="transition:none;transform:translateY(${-from*1.4}em)">${W}</span></span>`}).join('');
- if(!old)return;void el.offsetWidth;el.querySelectorAll('.odw').forEach(w=>{w.style.transition='';w.style.transitionDelay=(+w.dataset.k*90)+'ms';w.style.transform=`translateY(${-w.dataset.to*1.4}em)`})}
+function odo(el,val){const s=String(val),old=el._s;if(old===s)return;el._s=s;
+ const N=[...s],O=old?[...old]:[],dig=c=>/^\d$/.test(c),B=' ',H=1.4,DUR=1900,EZ='cubic-bezier(.22,.9,.3,1)';
+ if(!old){el.innerHTML=N.map(c=>`<span class="odc"><span class="odw"><i>${esc(c)}</i></span></span>`).join('');return}
+ const cs=getComputedStyle(el),cx=(odo.cx=odo.cx||document.createElement('canvas').getContext('2d'));cx.font=`${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+ const wd=c=>c&&c!==B?Math.ceil(cx.measureText(c).width+.5):0,n=Math.max(N.length,O.length),cols=[];
+ for(let k=n-1;k>=0;k--){const oc=O[O.length-1-k],nc=N[N.length-1-k];let items;
+  if(dig(oc)&&dig(nc)){const f=+oc,t=+nc>f?+nc:+nc+10;items=[];for(let d=f;d<=t;d++)items.push(String(d%10))}
+  else{const a=(k*3+1)%10;items=[oc||B,String(a),String((a+3)%10),String((a+6)%10),nc||B]}
+  cols.push({k,items,w0:wd(oc),w1:wd(nc)})}
+ el.innerHTML=cols.map(c=>`<span class="odc" style="width:${c.w0}px"><span class="odw" style="transition:none;transform:none">${c.items.map(x=>`<i>${esc(x)}</i>`).join('')}</span></span>`).join('');
+ void el.offsetWidth;
+ [...el.children].forEach((col,i)=>{const c=cols[i],dl=c.k*110,w=col.firstChild;
+  col.style.transition=`width ${DUR}ms ${EZ} ${dl}ms`;col.style.width=c.w1+'px';
+  w.style.transition=`transform ${DUR}ms ${EZ} ${dl}ms`;w.style.transform=`translateY(${-(c.items.length-1)*H}em)`});
+}
 function fadeTxt(e,t){if(!e.animate){e.textContent=t;return}const o=e.animate([{opacity:1},{opacity:0}],{duration:140,fill:'forwards'});o.onfinish=()=>{e.textContent=t;o.cancel();e.animate([{opacity:0},{opacity:1}],{duration:300})}}
 function statsUpdate(L){const m=$('#mmet');if(!m)return;let w=m.querySelector('.mst');
  if(w&&w.children.length!==L.length&&!w.dataset.rm){const n=w.children.length;
