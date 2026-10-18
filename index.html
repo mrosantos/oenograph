@@ -620,9 +620,22 @@ function applyST(){const r=document.documentElement,fi=!applyST.d;if(fi){applyST
 applyST();
 let tfT=0;const TV=['bg','fg','mut','card','line','acc','glass','glass2','glassN','glassP','gb','hl','paper','thumb','inv'].map(k=>'--'+k+' .5s ease-in-out').join(',');
 const sampleL=(p,o)=>sample.json(typeof p==='string'&&OL.ai()?p+'\n'+OL.ai():p,o);
+
+/* language change: words roll out and the new language rolls in, top to bottom */
+let lswN=0;
+function langEls(){const out=[],H=innerHeight,W=innerWidth;
+ document.querySelectorAll('#app *,#info *,#info2 *,#info3 *').forEach(el=>{if(out.length>260||/^(SCRIPT|STYLE|svg|path|INPUT|TEXTAREA)$/i.test(el.tagName))return;
+  let t=false;for(const n of el.childNodes)if(n.nodeType===3&&n.nodeValue.trim()){t=true;break}if(!t)return;
+  const r=el.getBoundingClientRect();if(r.bottom<0||r.top>H||r.right<0||r.left>W||!r.width)return;out.push([el,r.top])});return out}
+function langSwap(v){const id=++lswN;
+ if(!document.body.animate||matchMedia('(prefers-reduced-motion: reduce)').matches){OL.apply(v);render();drawSettings();return}
+ const E=langEls(),H=innerHeight||800,dy=t=>Math.max(0,Math.min(1,t/H))*160;
+ const outs=E.map(([el,t])=>el.animate([{opacity:1,filter:'blur(0)',transform:'none'},{opacity:0,filter:'blur(3px)',transform:'translateY(-.35em)'}],{duration:170,delay:dy(t)*.5,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'}));
+ setTimeout(()=>{if(id!==lswN)return;OL.apply(v);render();drawSettings();outs.forEach(a=>{try{a.cancel()}catch(e){}});
+  langEls().forEach(([el,t])=>el.animate([{opacity:0,filter:'blur(3px)',transform:'translateY(.45em)'},{opacity:1,filter:'blur(0)',transform:'none'}],{duration:420,delay:dy(t),easing:'cubic-bezier(.22,.9,.3,1)',fill:'backwards'}))},170+80)}
 function setST(k,v){PF[k]=v;try{localStorage.setItem('oenoS',JSON.stringify(PF))}catch(e){}
  const R=document.documentElement;if(k==='theme'){R.style.transition=TV;clearTimeout(tfT);tfT=setTimeout(()=>R.style.transition='',800)}
- applyST();if(k==='hideCost')render();if(k==='lang'){OL.apply(v);render();drawSettings()}
+ applyST();if(k==='hideCost')render();if(k==='lang')langSwap(v)
  document.querySelectorAll('#info.setw .seg[data-k="'+k+'"] button').forEach(b=>{const on=b.dataset.v==String(v);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)})}
 const GEAR='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 function openSettings(){plOpen=false;const I=$('#info');infoOpen=true;I.className='delw setw';I.innerHTML='<div class="ib"></div><div class="ic"><div class="ih"><i></i></div><div class="ibody"></div></div>';I.style.display='block';drawSettings();bindInfo();
