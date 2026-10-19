@@ -118,6 +118,7 @@ d['Top regions']='Principales régions';d['Cellar age']='Âge de la cave';
 pu(/^(\d+) times? · last (.+)$/,function(m,n,dt){return (+n===1?'1 fois':n+' fois')+' · dernière le '+dt});
 pu(/^(\d+) · latest (.+)$/,function(m,n,dt){return n+' · dernière le '+dt});
 pu(/^(\$[\d,.]+) per bottle$/,function(m,v){return v+' la bouteille'});
+pu(/^(.+) each$/,function(m,v){return v+' l’unité'});pu(/^avg (.+)$/,function(m,v){return 'moy. '+v});
 pu(/^(\d+) bottles?$/,function(m,n){return n+s1(n,' bouteille',' bouteilles')});
 
 L.f.pace1=function(pm,nb,sup){return 'Au rythme de <b>'+String(pm).replace('.',',')+'</b> '+(+pm<=1?'bouteille':'bouteilles')+' par mois, vos '+nb+' '+(nb<=1?'bouteille durerait':'bouteilles dureraient')+' environ <b>'+(sup>=24?(sup/12).toFixed(1).replace('.',',')+' ans':Math.round(sup)+' mois')+'</b>.'};

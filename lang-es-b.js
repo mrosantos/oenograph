@@ -95,6 +95,7 @@ d['Top regions']='Regiones principales';d['Cellar age']='Edad de la bodega';
 pu(/^(\d+) times? · last (.+)$/,function(m,n,dt){return (+n===1?'1 vez':n+' veces')+' · última '+dt});
 pu(/^(\d+) · latest (.+)$/,function(m,n,dt){return n+' · última '+dt});
 pu(/^(\$[\d,.]+) per bottle$/,function(m,v){return v+' por botella'});
+pu(/^(.+) each$/,function(m,v){return v+' cada una'});pu(/^avg (.+)$/,function(m,v){return 'media '+v});
 pu(/^(\d+) bottles?$/,function(m,n){return n+(+n===1?' botella':' botellas')});
 
 L.f.pace1=function(pm,nb,sup){return 'A un ritmo de <b>'+pm+'</b> botella'+(pm=='1.0'?'':'s')+' al mes, tus '+nb+' botella'+(nb==1?'':'s')+' durarían aproximadamente <b>'+(sup>=24?(sup/12).toFixed(1)+' años':Math.round(sup)+' meses')+'</b>.'};
