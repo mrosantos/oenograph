@@ -776,7 +776,7 @@ let pairBusy=0,pairFade=0;
 function pairHTML(b){if(b._new)return'';const P=b.pair&&b.pair.d&&b.pair.d.length?b.pair:null,L=P?null:pairLocal(b);if(!P&&!L&&!sample)return'';
  const ask=sample?`<button class="t" ${pairBusy?'disabled':''} onclick="askPair()">${pairBusy?'Asking Claude…':(P?'Ask Claude again':'Ask Claude for ideas')}</button>`:'';
  const fa=pairFade?' fpa':'',tipB=P&&P.tip?`<div class="pairs${fa}" style="--i:0"><label>Serving suggestion</label><div class="m">${esc(P.tip)}</div></div>`:'',body=P?`<div class="fpl${fa}">${P.d.map((x,i)=>`<div style="--i:${i+1}"><b>${esc(x.dish)}</b>${x.why?`<span class="m" style="display:block;margin-top:2px">${esc(x.why)}</span>`:''}</div>`).join('')}</div><div class="m${fa}" style="margin-top:6px;font-size:calc(12px*var(--ts));--i:${P.d.length+1}">Suggested by Claude for this bottle</div>`
-  :L?`<div class="fp">${L.dishes.map(d=>`<span>${esc(d)}</span>`).join('')}</div><div class="m" style="margin-top:8px">${esc(L.why)}</div>`:'';
+  :L?`<div class="fp">${L.dishes.slice(0,3).map(d=>`<span>${esc(d)}</span>`).join('')}</div><div class="m" style="margin-top:8px">${esc(L.why)}</div>`:'';
  return`${tipB}<div class="pairs"><label>Food pairing</label>${body}${ask?`<div style="margin-top:6px">${ask}</div>`:''}</div>`}
 async function askPair(){const b=cur;if(!b||!sample||pairBusy)return;pairBusy=1;render();
  try{const info=[['Producer',b.producer],['Wine',b.wine],['Vintage',b.vintage],['Appellation',b.appellation],['Region',[b.region,b.country].filter(Boolean).join(', ')],['Grapes',b.grapes],['Type',capT(b.type)],['Drink window',(ok(b.from)||ok(b.to))?(b.from||'?')+'–'+(b.to||'?'):'']].filter(r=>r[1]).map(r=>r[0]+': '+r[1]).join('\n');
