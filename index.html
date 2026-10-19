@@ -1231,7 +1231,7 @@ function delC(id){if(confirm('Remove from your log?')){C=C.filter(c=>c.id!=id);s
 function tf(id,el){const c=C.find(x=>x.id==id);if(!c)return;c.fav=!c.fav;if(el){el.innerHTML=HRT(c.fav);el.classList.toggle('on',c.fav)}fxHeart(el,c.fav);save();
  const k=el&&el.closest('.card');
  if(lsort=='fav'&&!c.fav&&k&&k.animate){const tops={};document.querySelectorAll('.sw').forEach(x=>tops[x.dataset.id]=x.getBoundingClientRect().top);
-  k.animate([{opacity:1,transform:'none'},{opacity:0,transform:'scale(.94)'}],{duration:300,delay:350,easing:'ease-in',fill:'forwards'}).onfinish=()=>{render();document.querySelectorAll('.sw').forEach(x=>{const t0=tops[x.dataset.id];if(t0===undefined||!x.animate)return;const d=t0-x.getBoundingClientRect().top;if(Math.abs(d)>1)x.animate([{transform:`translateY(${d}px)`},{transform:'none'}],{duration:620,easing:'cubic-bezier(.22,.85,.25,1)'})})}}else render()}
+  k.animate([{opacity:1,transform:'none'},{opacity:0,transform:'scale(.94)'}],{duration:300,delay:350,easing:'ease-in',fill:'forwards'}).onfinish=()=>{render();document.querySelectorAll('.sw').forEach(x=>{const t0=tops[x.dataset.id];if(t0===undefined||!x.animate)return;const d=t0-x.getBoundingClientRect().top;if(Math.abs(d)>1)x.animate([{transform:`translateY(${d}px)`},{transform:'none'}],{duration:620,easing:'cubic-bezier(.22,.85,.25,1)'})})}}else if(lsort=='fav')render()}
 function vLog(){
  let h=`<div class="sub">${C.length} wine${C.length==1?'':'s'} consumed</div>`;
  if(!C.length)return h+'<div class="empty">Nothing logged yet. Swipe a bottle in your cellar, or tap + to add a wine you tasted.</div>';
