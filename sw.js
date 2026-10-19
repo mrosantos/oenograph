@@ -1,5 +1,5 @@
 // Oenograph service worker: offline use + local bottle photos.
-const V='oeno-v10',CORE=['./','./index.html','./standalone.js','./lang.js','./lang-es.js','./lang-es-b.js','./lang-it.js','./lang-it-b.js','./lang-fr.js','./lang-fr-b.js','./manifest.webmanifest','./fonts/italiana.woff2','./fonts/cormorant-700.woff2','./fonts/cormorant-700-ext.woff2','./fonts/ebgaramond-500.woff2','./icon-oe-192.png','./icon-oe-512.png','./touch-oe.png'];
+const V='oeno-v11',CORE=['./','./index.html','./standalone.js','./lang.js','./lang-es.js','./lang-es-b.js','./lang-it.js','./lang-it-b.js','./lang-fr.js','./lang-fr-b.js','./manifest.webmanifest','./fonts/italiana.woff2','./fonts/ebgaramond-500.woff2','./fonts/ebgaramond-500-ext.woff2','./icon-oe-192.png','./icon-oe-512.png','./touch-oe.png'];
 const idbGet=id=>new Promise((ok,no)=>{const r=indexedDB.open('oeno-photos',1);r.onupgradeneeded=()=>r.result.createObjectStore('p',{keyPath:'id'});
   r.onsuccess=()=>{const d=r.result,q=d.transaction('p').objectStore('p').get(id);q.onsuccess=()=>{d.close();ok(q.result)};q.onerror=()=>{d.close();no(q.error)}};r.onerror=()=>no(r.error)});
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
