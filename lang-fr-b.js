@@ -68,6 +68,7 @@ var X={
 "Claude features are on":"Fonctions Claude activées","Included with your account, up to 30 requests a day":"Incluses avec votre compte, jusqu’à 30 requêtes par jour","Use my own key instead":"Utiliser ma propre clé","You’ve reached today’s Claude limit. It resets tomorrow.":"Vous avez atteint la limite Claude du jour. Elle se réinitialise demain.","Claude features aren’t turned on for this account.":"Les fonctions Claude ne sont pas activées pour ce compte.","Please sign in again.":"Reconnectez-vous.","Claude is busy. Try again shortly.":"Claude est occupé. Réessayez bientôt.",
 "Add note":"Ajouter une note","+ Add note":"+ Ajouter une note","Note":"Note","Dessert":"De dessert","Add Claude key":"Ajouter une clé Claude"
 };
+d["Location"]="Emplacement";d["By wine name"]="Par nom du vin";d["Newest first"]="Les plus récents d’abord";d["Grouped by region"]="Regroupés par région";d["Grouped by where it’s stored"]="Regroupés par emplacement";
 Object.keys(X).forEach(function(k){d[k]=X[k]});
 var FL={producer:'producteur',wine:'vin',vintage:'millésime',type:'type',country:'pays',region:'région',appellation:'appellation',grapes:'cépages'};
 function lst(s){var a=s.split(/, | and /).map(function(x){return FL[x]||OL.t(x)});return a.length>1?a.slice(0,-1).join(', ')+' et '+a[a.length-1]:a[0]}
