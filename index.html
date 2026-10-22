@@ -736,10 +736,10 @@ function go(t){nc();rsel=null;$('nav').classList.remove('hide');tab=t;cur=null;e
 const TO={cellar:0,drink:1,log:2,map:3};let tgo=false;
 function tabGo(t){const H0=({wine:back,consume:back})[tab]||tab,H=H0==='region'?'map':H0==='dwin'?'drink':H0,a=$('#app');
  if(t===H||tgo||!a.animate){go(t);return}
- const d=TO[t]>TO[H]?1:-1,px=Math.round(a.offsetWidth*.3),els=()=>[...a.children].flatMap(c=>c.classList.contains('top')?[...c.children].filter(x=>x.tagName!=='H1'):[c]);tgo=true;
+ const d=TO[t]>TO[H]?1:-1,px=Math.round(a.offsetWidth*.3),els=()=>[...a.children].flatMap(c=>c.classList.contains('top')?[...c.children].filter(x=>x.tagName!=='H1').flatMap(x=>x.tagName==='DIV'?[...x.children].filter(y=>y.getAttribute('onclick')!=='openSettings()'):[x]):[c]),sx=e=>e.closest('.top')?Math.round(px/8):px;tgo=true;
  [...document.querySelectorAll('nav button')].forEach((b,i)=>b.classList.toggle('on',i==TO[t]));
- const os=els().map(e=>e.animate([{transform:'none',opacity:1},{transform:`translateX(${-d*px}px)`,opacity:0}],{duration:150,easing:'ease-in',fill:'forwards'}));
- (os[0]||{}).onfinish=()=>{os.forEach(o=>o.cancel());go(t);els().forEach(e=>e.animate([{transform:`translateX(${d*px}px)`,opacity:0},{transform:'none',opacity:1}],{duration:280,easing:'cubic-bezier(.22,.9,.3,1)'}));tgo=false};if(!os.length){go(t);tgo=false}}
+ const os=els().map(e=>e.animate([{transform:'none',opacity:1},{transform:`translateX(${-d*sx(e)}px)`,opacity:0}],{duration:150,easing:'ease-in',fill:'forwards'}));
+ (os[0]||{}).onfinish=()=>{os.forEach(o=>o.cancel());go(t);els().forEach(e=>e.animate([{transform:`translateX(${d*sx(e)}px)`,opacity:0},{transform:'none',opacity:1}],{duration:280,easing:'cubic-bezier(.22,.9,.3,1)'}));tgo=false};if(!os.length){go(t);tgo=false}}
 document.querySelectorAll('nav button[data-t]').forEach(b=>b.onclick=()=>tabGo(b.dataset.t));
 function openW(b){if(tab!=='wine')back=tab==='drink'?'drink':tab==='dwin'?'dwin':tab==='region'?'region':'cellar';lsc=0;cur={...b,lots:(b.lots||[]).map(l=>({...l}))};editing=false;fwd(()=>{tab='wine';scrollTo(0,0);render()})}
 function newW(){back=tab;lsc=0;cur={lots:[{id:'l'+Date.now(),qty:1,cur:'USD',price:'',pdate:'',store:''}],_new:true,...(tab==='log'?{_only:1}:{})};editing=true;addMode=tab==='log'?'tasted':(tab==='cellar'&&cview==='wish')?'wish':'cellar';rt=0;fv=false;msg='';openAdd()}
