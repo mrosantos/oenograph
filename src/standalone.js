@@ -112,7 +112,7 @@ async function callClaude(input,opts={}){
   let r;
   if(viaSrv){
     try{
-      r=await fetch('/api/claude?tier='+encodeURIComponent(opts.modelTier||'default')+'&max='+(opts.maxTokens||4096),{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+await user.getIdToken()},body:JSON.stringify(messages)});
+      r=await fetch('/api/claude?tier='+encodeURIComponent(opts.modelTier||'default')+'&max='+(opts.maxTokens||4096)+(opts.web?'&web='+opts.web:''),{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+await user.getIdToken()},body:JSON.stringify(messages)});
     }catch(e){throw {code:'network',message:'Couldn’t reach Claude. Check your connection.'}}
     if(!r.ok){
       let j={};try{j=await r.json()}catch(e){}
@@ -122,13 +122,14 @@ async function callClaude(input,opts={}){
       throw {code:'error',message:(j.error&&j.error.message)||j.message||('Claude error '+r.status)};
     }
     const j=await r.json();
-    return {text:(j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join(''),truncated:j.stop_reason==='max_tokens'};
+    if(j.stop_reason==='pause_turn'&&opts.web&&(opts._turn||0)<2)return more(j);
+    return done(j);
   }
   try{
     r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{
       'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01',
       'anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:MODELS[opts.modelTier]||MODELS.default,max_tokens:opts.maxTokens||4096,messages})});
+      body:JSON.stringify({model:MODELS[opts.modelTier]||MODELS.default,max_tokens:opts.maxTokens||4096,messages,...(opts.web?{tools:[{type:'web_search_20250305',name:'web_search',max_uses:opts.web}]}:{})})});
   }catch(e){throw {code:'network',message:'Couldn’t reach Claude. Check your connection.'}}
   if(!r.ok){
     let m='';try{m=(await r.json()).error.message||''}catch(e){}
@@ -138,8 +139,27 @@ async function callClaude(input,opts={}){
     throw {code:'error',message:m||('Claude error '+r.status)};
   }
   const j=await r.json();
-  return {text:(j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join(''),truncated:j.stop_reason==='max_tokens'};
+  if(j.stop_reason==='pause_turn'&&opts.web&&(opts._turn||0)<2)return more(j);
+  return done(j);
+  // A long web search can pause; send the turn back so Claude carries on.
+  async function more(j){
+    const nx=await callClaude([...messages,{role:'assistant',content:j.content}],{...opts,_turn:(opts._turn||0)+1});
+    nx.sources=mergeSrc(srcOf(j.content||[]),nx.sources);return nx;
+  }
+  function done(j){
+    const c=j.content||[];
+    return {text:c.filter(b=>b.type==='text').map(b=>b.text).join(''),truncated:j.stop_reason==='max_tokens',sources:mergeSrc(opts._prev,srcOf(c))};
+  }
 }
+function srcOf(c){
+  const cited=[],results=[];
+  for(const b of c){
+    if(b.type==='text'&&Array.isArray(b.citations))for(const x of b.citations)if(x&&x.url)cited.push({url:x.url,title:x.title||''});
+    if(b.type==='web_search_tool_result'&&Array.isArray(b.content))for(const x of b.content)if(x&&x.url)results.push({url:x.url,title:x.title||''});
+  }
+  return {cited,results};
+}
+function mergeSrc(a,b){a=a||{cited:[],results:[]};b=b||{cited:[],results:[]};return {cited:[...a.cited,...b.cited],results:[...a.results,...b.results]}}
 function parseJSON(t){
   t=String(t).replace(/```(?:json)?/gi,'').trim();
   const a=t.search(/[\[{]/),z=Math.max(t.lastIndexOf('}'),t.lastIndexOf(']'));

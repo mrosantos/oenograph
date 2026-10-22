@@ -5,6 +5,7 @@ import {DurableObject} from 'cloudflare:workers';
 const PROJECT='oenograph';                 // Firebase project id
 const DAILY_CAP=30;                        // Claude requests per person per day
 const MAX_TOKENS=4096;
+const MAX_SEARCHES=5;                      // web searches allowed in one label lookup
 const MODELS={quick:'claude-haiku-4-5-20251001',default:'claude-sonnet-5-5'}; // no Opus on the shared key
 const JWKS_URL='https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 
@@ -57,9 +58,14 @@ async function api(req,env,path){
   const raw=await req.text();
   if(raw.length>8e6||raw[0]!=='[')return json({error:'bad_request',message:'That request couldn’t be sent.'},400);
   const u=new URL(req.url),model=MODELS[u.searchParams.get('tier')]||MODELS.default,mt=Math.min(MAX_TOKENS,Math.max(1,+u.searchParams.get('max')||MAX_TOKENS));
-  const h=await stub.hit(today(),DAILY_CAP);
-  if(!h.ok)return json({error:'daily_limit',message:'You’ve reached today’s Claude limit. It resets tomorrow.'},429);
-  const body='{"messages":'+raw+',"model":'+JSON.stringify(model)+',"max_tokens":'+mt+'}'; // later keys win
+  const web=Math.min(MAX_SEARCHES,Math.max(0,Math.floor(+u.searchParams.get('web')||0)));
+  // A request that searches the web counts as two uses.
+  for(let i=0;i<(web?2:1);i++){
+    const h=await stub.hit(today(),DAILY_CAP);
+    if(!h.ok)return json({error:'daily_limit',message:'You’ve reached today’s Claude limit. It resets tomorrow.'},429);
+  }
+  const tools=web?',"tools":[{"type":"web_search_20250305","name":"web_search","max_uses":'+web+'}]':'';
+  const body='{"messages":'+raw+',"model":'+JSON.stringify(model)+',"max_tokens":'+mt+tools+'}'; // later keys win
   const r=await fetch(env.TEST_UPSTREAM||'https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':env.ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},body});
   return new Response(r.body,{status:r.status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 }
