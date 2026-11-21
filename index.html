@@ -625,22 +625,33 @@ img.pld{background:color-mix(in srgb,var(--fg) 6%,var(--card))}
 @keyframes phsh{0%{background-position:center,120% 0,0 0}100%{background-position:center,-20% 0,0 0}}
 @media (prefers-reduced-motion:reduce){.ph.pld::before{animation:none}}
 
-/* ===== iPhone Duo, closed (outer screen ~382 wide, short): narrow vertical menu at bottom right ===== */
+/* ===== iPhone Duo, closed (outer screen ~382 wide, short): menu pills on the right edge, sized and placed like the system apps ===== */
 @media (min-width:378px) and (max-width:389px) and (max-height:720px) and (orientation:portrait) and (hover:none){
-:root:root{--nd:calc(env(safe-area-inset-bottom,0px) + 4px)}
-main{padding-right:58px;padding-left:14px}
+:root:root{--nd:calc(env(safe-area-inset-bottom,0px) + 4px);--dpb:max(24px,env(safe-area-inset-bottom,0px));--dpi:52px}
+main{padding-right:60px;padding-left:14px}
 body::after{display:none}
-nav,body.kbd nav{left:auto!important;right:6px!important;bottom:calc(env(safe-area-inset-bottom,0px) + 10px)!important;width:46px;box-sizing:border-box;flex-direction:column;padding:3px!important;border-radius:23px!important;gap:0!important}
+nav,body.kbd nav{left:auto!important;right:6px!important;bottom:var(--dpb)!important;width:46px;box-sizing:border-box;flex-direction:column;padding:0!important;border-radius:23px!important;gap:0!important;background:var(--card)!important;border:1px solid var(--line)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:0 4px 16px rgba(0,0,0,.12)!important}
 nav.hide{transform:translateX(160%)!important}
-nav button{flex:none!important;padding:11px 0!important;font-size:0!important;gap:0!important;border-radius:20px!important}
+nav button{flex:none!important;height:var(--dpi);padding:0!important;font-size:0!important;gap:0!important;border-radius:23px!important;display:flex!important;align-items:center;justify-content:center;color:var(--fg)!important}
+nav button.on{color:var(--acc)!important}
 nav button span{display:none}
-nav::before{top:3px!important;left:3px!important;right:3px!important;bottom:auto!important;width:auto!important;height:calc((100% - 6px)/4)!important;border-radius:20px!important}
+nav::before{top:-1px!important;left:-1px!important;right:-1px!important;bottom:auto!important;width:auto!important;height:var(--dpi)!important;border-radius:23px!important;background:var(--dpa)!important;box-shadow:none!important}
 nav:has(button:nth-child(2).on)::before{transform:translateY(100%)!important}
 nav:has(button:nth-child(3).on)::before{transform:translateY(200%)!important}
 nav:has(button:nth-child(4).on)::before{transform:translateY(300%)!important}
-#toast{right:60px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
+.top .plus[aria-label="Add wine"],.top .plus[aria-label="Search"]{position:fixed;z-index:6;right:6px;width:46px!important;height:var(--dpi)!important;margin:0!important;box-sizing:border-box;background:var(--card)!important;border:1px solid var(--line)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;color:var(--fg)!important;box-shadow:0 4px 16px rgba(0,0,0,.12)!important}
+.top .plus[aria-label="Add wine"] svg,.top .plus[aria-label="Search"] svg{width:24px;height:24px}
+.top .plus[aria-label="Search"]{bottom:calc(var(--dpb) + 4*var(--dpi) + 17px);border-radius:0 0 23px 23px!important;border-top:0!important}
+.top .plus[aria-label="Add wine"]{bottom:calc(var(--dpb) + 5*var(--dpi) + 17px);border-radius:23px 23px 0 0!important;border-bottom:0!important}
+.top:not(:has(.plus[aria-label="Search"])) .plus[aria-label="Add wine"]{bottom:calc(var(--dpb) + 4*var(--dpi) + 17px);border-radius:23px!important;border-bottom:1px solid var(--line)!important}
+.top:has(.plus[aria-label="Add wine"]):has(.plus[aria-label="Search"]) .plus[aria-label="Add wine"]{box-shadow:none!important}
+body:has(nav.hide) .top .plus[aria-label="Add wine"],body:has(nav.hide) .top .plus[aria-label="Search"]{transform:translateX(160%)}.top .plus[aria-label="Add wine"],.top .plus[aria-label="Search"]{transition:transform .28s ease}
+#toast{right:62px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
 #app>.sub,.top+.sub{font-size:calc(13.5px*var(--ts))}
 }
+:root{--dpa:color-mix(in srgb,var(--fg) 8%,var(--card))}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--dpa:var(--bg)}}
+:root[data-theme="dark"]{--dpa:var(--bg)}
 /* ===== iPhone Duo, open sideways (~951x585): same narrow menu at bottom right instead of the left sidebar ===== */
 @media (min-width:900px) and (max-width:1000px) and (max-height:640px) and (orientation:landscape) and (hover:none){
 :root:root{--nd:calc(env(safe-area-inset-bottom,0px) + 4px)}
