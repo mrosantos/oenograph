@@ -85,10 +85,15 @@ import {registerPlugin} from '@capacitor/core';
     var active=nb.findIndex(function(b){return b.classList.contains('on')});
     var actions=[];
     if(top('Add wine'))actions.push({id:'add',icon:'plus',img:img('add',topSvg('Add wine')),label:'Add wine'});
-    if(top('Settings')||typeof window.openSettings==='function')actions.push({id:'settings',icon:'gearshape',img:img('set',topSvg('Settings')||document.querySelector('nav .navs svg')),label:'Settings'});
+    if(top('Search'))actions.push({id:'search',icon:'magnifyingglass',img:img('search',topSvg('Search')),label:'Search'});
+    // "•••" opens a small iOS menu with Settings (and Cellar insights when the page has it).
+    var more=[{id:'settings',icon:'gearshape',label:(top('Settings')&&top('Settings').getAttribute('aria-label'))||'Settings'}];
+    var ins=document.querySelector('[onclick="openStats()"]');
+    if(ins)more.unshift({id:'insights',icon:'chart.bar',label:ins.textContent.replace(/[›>]/g,'').trim()||'Cellar insights'});
+    actions.push({id:'more',icon:'ellipsis',label:'More',menu:more});
     var hidden=nav.classList.contains('hide')||document.body.classList.contains('kbd');
     var accent=getComputedStyle(html).getPropertyValue('--acc').trim();
-    var spec=JSON.stringify({mode:m,hidden:hidden,active:active,tabs:tabs,actions:actions,search:!!top('Search'),searchImg:img('search',topSvg('Search')),top:!!(document.getElementById('fbtt')&&document.getElementById('fbtt').classList.contains('on')),accent:accent});
+    var spec=JSON.stringify({mode:m,hidden:hidden,active:active,tabs:tabs,actions:actions,search:false,top:!!(document.getElementById('fbtt')&&document.getElementById('fbtt').classList.contains('on')),accent:accent});
     if(failed||spec===last)return;
     last=spec;
     GlassBar.update({spec:spec}).then(function(r){
@@ -107,6 +112,7 @@ import {registerPlugin} from '@capacitor/core';
     else if(id==='add'){var a=top('Add wine');if(a)a.click()}
     else if(id==='search'){var s=top('Search');if(s)s.click()}
     else if(id==='top'){if(typeof window.backTop==='function')window.backTop();else{var f=document.getElementById('fbtt');if(f)f.click()}}
+    else if(id==='insights'){if(typeof window.openStats==='function')window.openStats()}
     else if(id==='settings'){var t=top('Settings');if(t)t.click();else if(window.openSettings)window.openSettings()}
     soon();
   });

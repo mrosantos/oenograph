@@ -47,6 +47,7 @@ struct GlassItem {
     let icon: String
     let label: String
     var img: String = ""
+    var menu: [GlassItem] = []   // when set, the button opens this menu (the "•••" button)
 
     // The app's own icon (a PNG drawn by the page), or an SF Symbol until it arrives.
     func image(size: CGFloat) -> UIImage? {
@@ -78,11 +79,13 @@ struct GlassSpec {
         search = o["search"] as? Bool ?? false
         searchImg = o["searchImg"] as? String ?? ""
         top = o["top"] as? Bool ?? false
-        func items(_ k: String) -> [GlassItem] {
-            return (o[k] as? [[String: Any]] ?? []).map {
-                GlassItem(id: $0["id"] as? String ?? "", icon: $0["icon"] as? String ?? "circle", label: $0["label"] as? String ?? "", img: $0["img"] as? String ?? "")
+        func parse(_ list: [[String: Any]]) -> [GlassItem] {
+            return list.map {
+                GlassItem(id: $0["id"] as? String ?? "", icon: $0["icon"] as? String ?? "circle", label: $0["label"] as? String ?? "", img: $0["img"] as? String ?? "",
+                          menu: parse($0["menu"] as? [[String: Any]] ?? []))
             }
         }
+        func items(_ k: String) -> [GlassItem] { return parse(o[k] as? [[String: Any]] ?? []) }
         tabs = items("tabs")
         actions = items("actions")
         if let hex = o["accent"] as? String, let c = UIColor(hex: hex) { accent = c }
@@ -140,7 +143,8 @@ final class GlassGroup: UIView {
     }
 
     func setItems(_ new: [GlassItem]) {
-        let same = new.map { $0.id + $0.icon + $0.label + $0.img } == items.map { $0.id + $0.icon + $0.label + $0.img }
+        func key(_ i: GlassItem) -> String { return i.id + i.icon + i.label + i.img + i.menu.map { $0.id + $0.label }.joined() }
+        let same = new.map(key) == items.map(key)
         if same { return }
         buttons.forEach { $0.removeFromSuperview() }
         items = new
@@ -162,10 +166,18 @@ final class GlassGroup: UIView {
             b.configuration = c
             b.accessibilityLabel = item.label
             let id = item.id
-            b.addAction(UIAction { [weak self] _ in
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                self?.onTap?(id)
-            }, for: .touchUpInside)
+            if item.menu.isEmpty {
+                b.addAction(UIAction { [weak self] _ in
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    self?.onTap?(id)
+                }, for: .touchUpInside)
+            } else {
+                b.menu = UIMenu(children: item.menu.map { m in
+                    let mid = m.id
+                    return UIAction(title: m.label, image: UIImage(systemName: m.icon)) { [weak self] _ in self?.onTap?(mid) }
+                })
+                b.showsMenuAsPrimaryAction = true
+            }
             effectView.contentView.addSubview(b)
             return b
         }
@@ -234,11 +246,10 @@ final class GlassOverlay: UIView {
         tabs.vertical = duo
         actions.vertical = duo
         tabs.showLabels = !duo
-        var tabItems = s.tabs
-        if duo && s.search { tabItems.append(GlassItem(id: "search", icon: "magnifyingglass", label: "Search", img: s.searchImg)) }
-        tabs.setItems(tabItems)
+        // + , Search and ••• share one capsule; the menu holds only the tabs.
+        tabs.setItems(s.tabs)
         actions.setItems(s.actions)
-        searchButton.setItems(!duo && s.search ? [GlassItem(id: "search", icon: "magnifyingglass", label: "Search", img: s.searchImg)] : [])
+        searchButton.setItems([])
         topButton.showLabels = true
         topButton.setItems([GlassItem(id: "top", icon: "chevron.up", label: "Top")])
         [tabs, actions, searchButton, topButton].forEach { $0.accent = s.accent }
