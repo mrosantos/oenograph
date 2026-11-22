@@ -18,7 +18,8 @@ public class GlassBarPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func update(_ call: CAPPluginCall) {
         let json = call.getString("spec") ?? "{}"
         let spec = GlassSpec(json: json)
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
             guard let host = self.bridge?.viewController?.view else { call.resolve(["info": "no host view"]); return }
             if self.overlay == nil {
                 let o = GlassOverlay(frame: host.bounds)
