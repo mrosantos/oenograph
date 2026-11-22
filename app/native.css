@@ -1,0 +1,24 @@
+/* Only in the iPhone/iPad app (added by app/build.mjs).
+   iPhone Duo closed: the app can draw beside the clock strip on the right, so the round
+   Add/Search/Settings buttons and the menu sit in that strip, centred under the WiFi icon.
+   native.js adds the "duo-rail" class when the screen matches. */
+html.duo-rail{--rr:24px;--dpi:52px;--dpt:172px;--dps:52px}
+html.duo-rail main{padding-left:14px!important;padding-right:84px!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 24px)!important}
+html.duo-rail body::after{display:none}
+html.duo-rail nav,html.duo-rail body.kbd nav{left:auto!important;right:var(--rr)!important;bottom:auto!important;top:calc(var(--dpt) + 3*var(--dps) + 22px)!important;width:46px!important;box-sizing:border-box;flex-direction:column;padding:0!important;border-radius:23px!important;gap:0!important;background:var(--card)!important;border:1px solid var(--line)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:0 4px 16px rgba(0,0,0,.12)!important;transform:none}
+html.duo-rail nav.hide{transform:translateX(200%)!important}
+html.duo-rail nav button{flex:none!important;height:var(--dpi);padding:0!important;font-size:0!important;gap:0!important;border-radius:23px!important;display:flex!important;align-items:center;justify-content:center;color:var(--fg)!important}
+html.duo-rail nav button.on{color:var(--acc)!important}
+html.duo-rail nav button span{display:none}
+html.duo-rail nav .navs{display:none!important}
+html.duo-rail nav::before{top:-1px!important;left:-1px!important;right:-1px!important;bottom:auto!important;width:auto!important;height:var(--dpi)!important;border-radius:23px!important;background:var(--dpa)!important;box-shadow:none!important}
+html.duo-rail nav:has(button:nth-child(2).on)::before{transform:translateY(100%)!important}
+html.duo-rail nav:has(button:nth-child(3).on)::before{transform:translateY(200%)!important}
+html.duo-rail nav:has(button:nth-child(4).on)::before{transform:translateY(300%)!important}
+html.duo-rail .top .plus[aria-label="Add wine"],html.duo-rail .top .plus[aria-label="Search"],html.duo-rail .top .plus[aria-label="Settings"]{position:fixed;z-index:6;right:var(--rr);top:calc(var(--dpt) + var(--k,0)*var(--dps));width:46px!important;height:46px!important;margin:0!important;box-sizing:border-box;border-radius:50%!important;background:var(--card)!important;border:1px solid var(--line)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;color:var(--fg)!important;box-shadow:0 4px 16px rgba(0,0,0,.12)!important;display:flex!important;align-items:center;justify-content:center;transition:transform .28s ease}
+html.duo-rail .top .plus svg{width:22px;height:22px}
+html.duo-rail .top .plus[aria-label="Search"]{--k:1}html.duo-rail .top .plus[aria-label="Settings"]{--k:2}
+html.duo-rail .top:not(:has(.plus[aria-label="Search"])) .plus[aria-label="Settings"]{--k:1}
+html.duo-rail .top:not(:has(.plus[aria-label="Search"])):not(:has(.plus[aria-label="Add wine"])) .plus[aria-label="Settings"]{--k:0}
+html.duo-rail body:has(nav.hide) .top .plus{transform:translateX(200%)}
+html.duo-rail #toast{right:84px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}

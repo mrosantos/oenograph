@@ -41,3 +41,10 @@
     if(m.type==='attributes')fix(m.target);else m.addedNodes.forEach(scan)})})
     .observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['src']});
 })();
+
+// iPhone Duo, closed: the outer screen is about 466 points wide and short, with the clock strip on the right.
+(function(){
+  var q=matchMedia('(min-width:450px) and (max-width:480px) and (max-height:720px) and (orientation:portrait) and (hover:none)');
+  function set(){document.documentElement.classList.toggle('duo-rail',q.matches)}
+  set();(q.addEventListener?q.addEventListener('change',set):q.addListener(set));
+})();
