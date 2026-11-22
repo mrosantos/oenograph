@@ -2,7 +2,7 @@
 // It provides the same small "window.claude" surface the app was written against,
 // so the app code itself barely changes.
 import {initializeApp} from 'firebase/app';
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut,deleteUser,reauthenticateWithCredential,EmailAuthProvider} from 'firebase/auth';
+import {getAuth,initializeAuth,indexedDBLocalPersistence,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut,deleteUser,reauthenticateWithCredential,EmailAuthProvider} from 'firebase/auth';
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,doc,getDoc,getDocFromCache,setDoc,deleteDoc,collection,getDocs,writeBatch,terminate,clearIndexedDbPersistence} from 'firebase/firestore';
 
 const firebaseConfig={
@@ -356,7 +356,8 @@ addEventListener('pageshow',e=>{if(e.persisted)location.reload()});
 (async()=>{
   try{
     app=initializeApp(firebaseConfig);
-    auth=getAuth(app);
+    // In the iPhone/iPad app, the default sign-in setup waits forever for a web-only helper, so pick local storage directly.
+    auth=location.protocol==='capacitor:'?initializeAuth(app,{persistence:indexedDBLocalPersistence}):getAuth(app);
     fs=initializeFirestore(app,{experimentalAutoDetectLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
     user=await new Promise(ok=>{let d=0;const off=onAuthStateChanged(auth,u=>{if(!d){d=1;off();ok(u)}});setTimeout(()=>{if(!d){d=1;ok(auth.currentUser)}},5000)});
     if(!user&&!OENO.local){
