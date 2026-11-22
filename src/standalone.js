@@ -88,10 +88,12 @@ const MODELS={quick:'claude-haiku-4-5-20251001',default:'claude-sonnet-5-5',comp
 const b64=async b=>(await toDataURL(b)).split(',')[1];
 // Claude via the owner's server, for invited accounts without their own key.
 let srvOK=LS.get('oenoSrv')==='1';
+// Inside the iPhone/iPad app the page isn't on oenograph.app, so the server needs its full address.
+const SRV=location.protocol==='capacitor:'?'https://oenograph.app':'';
 async function checkServer(){
   if(!user||navigator.onLine===false)return srvOK;
   try{
-    const r=await Promise.race([fetch('/api/claude/status',{headers:{authorization:'Bearer '+await user.getIdToken()}}),timeout(5000)]);
+    const r=await Promise.race([fetch(SRV+'/api/claude/status',{headers:{authorization:'Bearer '+await user.getIdToken()}}),timeout(5000)]);
     srvOK=r.ok;
     if(r.status===401||r.status===403||r.status===503||r.ok)LS.set('oenoSrv',srvOK?'1':'0');
   }catch(e){}
@@ -112,7 +114,7 @@ async function callClaude(input,opts={}){
   let r;
   if(viaSrv){
     try{
-      r=await fetch('/api/claude?tier='+encodeURIComponent(opts.modelTier||'default')+'&max='+(opts.maxTokens||4096)+(opts.web?'&web='+opts.web:''),{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+await user.getIdToken()},body:JSON.stringify(messages)});
+      r=await fetch(SRV+'/api/claude?tier='+encodeURIComponent(opts.modelTier||'default')+'&max='+(opts.maxTokens||4096)+(opts.web?'&web='+opts.web:''),{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+await user.getIdToken()},body:JSON.stringify(messages)});
     }catch(e){throw {code:'network',message:'Couldn’t reach Claude. Check your connection.'}}
     if(!r.ok){
       let j={};try{j=await r.json()}catch(e){}
@@ -345,7 +347,7 @@ function showGate(){
 }
 
 /* ---------- service worker ---------- */
-if('serviceWorker' in navigator){
+if('serviceWorker' in navigator&&location.protocol!=='capacitor:'){
   addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
 

@@ -1,0 +1,10 @@
+{
+	"appId": "app.oenograph",
+	"appName": "Œnograph",
+	"webDir": "www",
+	"ios": {
+		"contentInset": "never",
+		"backgroundColor": "#faf8f5"
+	},
+	"packageClassList": []
+}

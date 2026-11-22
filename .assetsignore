@@ -10,3 +10,7 @@ README.md
 wrangler.jsonc
 server
 .wrangler
+www
+ios
+app
+capacitor.config.json

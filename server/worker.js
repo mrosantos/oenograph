@@ -70,11 +70,18 @@ async function api(req,env,path){
   return new Response(r.body,{status:r.status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 }
 
+const cors=(h={})=>({'access-control-allow-origin':'capacitor://localhost','vary':'origin',...h});
+
 export default {
   async fetch(req,env){
     const path=new URL(req.url).pathname;
     if(path.startsWith('/api/')){
-      try{return await api(req,env,path)}catch(e){return json({error:'server',message:'Something went wrong on the server.'},500)}
+      // The iPhone/iPad app runs from capacitor://localhost, so it needs permission to call this server.
+      const app=req.headers.get('origin')==='capacitor://localhost';
+      if(app&&req.method==='OPTIONS')return new Response(null,{status:204,headers:cors({'access-control-allow-methods':'GET, POST','access-control-allow-headers':'authorization, content-type','access-control-max-age':'86400'})});
+      let r;try{r=await api(req,env,path)}catch(e){r=json({error:'server',message:'Something went wrong on the server.'},500)}
+      if(app){r=new Response(r.body,r);for(const [k,v] of Object.entries(cors()))r.headers.set(k,v)}
+      return r;
     }
     return env.ASSETS.fetch(req);
   }
