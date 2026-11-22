@@ -26,3 +26,7 @@ html.duo-rail #toast{right:84px;bottom:calc(env(safe-area-inset-bottom,0px) + 12
 /* When iOS draws the glass menu and buttons, hide the page's own (they stay pressable from the glass ones). */
 html.native-glass nav,html.native-glass body::after{visibility:hidden!important}
 html.native-glass .top .plus[aria-label="Add wine"],html.native-glass .top .plus[aria-label="Search"],html.native-glass .top .plus[aria-label="Settings"]{visibility:hidden!important}
+
+/* Duo closed with real glass: cards slide under the glass menu (like Apple's apps); their text stays clear of it. */
+html.duo-rail.native-glass .sw{margin-right:-70px}
+html.duo-rail.native-glass .sw>.card{padding-right:84px!important}
