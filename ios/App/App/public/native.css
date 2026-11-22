@@ -5,7 +5,7 @@
 html.duo-rail{--rr:24px;--dpi:52px;--dpt:172px;--dps:52px}
 html.duo-rail main{padding-left:14px!important;padding-right:84px!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 24px)!important}
 html.duo-rail body::after{display:none}
-html.duo-rail nav,html.duo-rail body.kbd nav{left:auto!important;right:var(--rr)!important;bottom:auto!important;top:calc(var(--dpt) + 3*var(--dps) + 22px)!important;width:46px!important;box-sizing:border-box;flex-direction:column;padding:0!important;border-radius:23px!important;gap:0!important;background:var(--card)!important;border:1px solid var(--line)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:0 4px 16px rgba(0,0,0,.12)!important;transform:none}
+html.duo-rail nav,html.duo-rail body.kbd nav{left:auto!important;right:var(--rr)!important;bottom:auto!important;top:calc((var(--dpt) + 3*var(--dps) - 6px + 100vh - env(safe-area-inset-bottom,0px))/2 - 105px)!important;width:46px!important;box-sizing:border-box;flex-direction:column;padding:0!important;border-radius:23px!important;gap:0!important;background:var(--card)!important;border:1px solid var(--line)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:0 4px 16px rgba(0,0,0,.12)!important;transform:none}
 html.duo-rail nav.hide{transform:translateX(200%)!important}
 html.duo-rail nav button{flex:none!important;height:var(--dpi);padding:0!important;font-size:0!important;gap:0!important;border-radius:23px!important;display:flex!important;align-items:center;justify-content:center;color:var(--fg)!important}
 html.duo-rail nav button.on{color:var(--acc)!important}
