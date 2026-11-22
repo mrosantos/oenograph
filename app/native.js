@@ -61,27 +61,39 @@ import {registerPlugin} from '@capacitor/core';
   function mode(){return html.classList.contains('duo-rail')?'duo':upright.matches?'bottom':'off'}
   function tabsOf(){var n=document.querySelector('nav');return n?Array.prototype.slice.call(n.querySelectorAll(':scope > button[data-t]')):[]}
   function top(l){return document.querySelector('.top .plus[aria-label="'+l+'"]')}
-  var last='',queued=false,failed=false,shown=false;
+  var last='',queued=false,failed=false;
+  // The app's own line icons, drawn as pictures so the glass menu matches the rest of œnograph.
+  var IMG={},pending={};
+  function img(key,svg){
+    if(!svg)return '';
+    if(IMG[key])return IMG[key];
+    if(!pending[key]){
+      pending[key]=1;
+      var c=svg.cloneNode(true);c.setAttribute('width','72');c.setAttribute('height','72');c.setAttribute('xmlns','http://www.w3.org/2000/svg');
+      var src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(c).replace(/currentColor/g,'#000'));
+      var im=new Image();im.onload=function(){try{var cv=document.createElement('canvas');cv.width=cv.height=72;cv.getContext('2d').drawImage(im,0,0,72,72);IMG[key]=cv.toDataURL('image/png').split(',')[1];soon()}catch(e){}};im.src=src;
+    }
+    return '';
+  }
+  function topSvg(l){var b=top(l);return b&&b.querySelector('svg')}
   function send(){
     queued=false;
     var m=mode();if(m==='off'||failed)html.classList.remove('native-glass');
     var nav=document.querySelector('nav');if(!nav)return;
     var nb=tabsOf();
-    var tabs=nb.map(function(b){var s=b.querySelector('span');return {id:'tab:'+b.dataset.t,icon:ICON[b.dataset.t]||'circle',label:(s?s.textContent:b.textContent).trim()}});
+    var tabs=nb.map(function(b){var s=b.querySelector('span');return {id:'tab:'+b.dataset.t,icon:ICON[b.dataset.t]||'circle',img:img('t'+b.dataset.t,b.querySelector('svg')),label:(s?s.textContent:b.textContent).trim()}});
     var active=nb.findIndex(function(b){return b.classList.contains('on')});
     var actions=[];
-    if(top('Add wine'))actions.push({id:'add',icon:'plus',label:'Add wine'});
-    if(top('Settings')||typeof window.openSettings==='function')actions.push({id:'settings',icon:'gearshape',label:'Settings'});
+    if(top('Add wine'))actions.push({id:'add',icon:'plus',img:img('add',topSvg('Add wine')),label:'Add wine'});
+    if(top('Settings')||typeof window.openSettings==='function')actions.push({id:'settings',icon:'gearshape',img:img('set',topSvg('Settings')||document.querySelector('nav .navs svg')),label:'Settings'});
     var hidden=nav.classList.contains('hide')||document.body.classList.contains('kbd');
     var accent=getComputedStyle(html).getPropertyValue('--acc').trim();
-    var spec=JSON.stringify({mode:m,hidden:hidden,active:active,tabs:tabs,actions:actions,search:!!top('Search'),accent:accent});
+    var spec=JSON.stringify({mode:m,hidden:hidden,active:active,tabs:tabs,actions:actions,search:!!top('Search'),searchImg:img('search',topSvg('Search')),accent:accent});
     if(failed||spec===last)return;
     last=spec;
     GlassBar.update({spec:spec}).then(function(r){
       // Only hide the page's own buttons once iOS confirms it is drawing the glass ones.
       if(m!=='off')html.classList.add('native-glass');
-      // Temporary: show what iOS drew, to check placement on the real phone.
-      if(!shown&&r&&r.info&&typeof window.toast==='function'){shown=true;window.toast('Glass: '+r.info,12000)}
     }).catch(function(e){
       failed=true;html.classList.remove('native-glass');
       var msg='Glass menu error: '+((e&&(e.message||e.code))||e);

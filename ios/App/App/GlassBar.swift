@@ -45,6 +45,16 @@ struct GlassItem {
     let id: String
     let icon: String
     let label: String
+    var img: String = ""
+
+    // The app's own icon (a PNG drawn by the page), or an SF Symbol until it arrives.
+    func image(size: CGFloat) -> UIImage? {
+        if !img.isEmpty, let d = Data(base64Encoded: img), let i = UIImage(data: d, scale: 3) {
+            let r = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
+            return r.image { _ in i.draw(in: CGRect(x: 0, y: 0, width: size, height: size)) }.withRenderingMode(.alwaysTemplate)
+        }
+        return UIImage(systemName: icon, withConfiguration: UIImage.SymbolConfiguration(pointSize: size * 0.8, weight: .regular))
+    }
 }
 
 struct GlassSpec {
@@ -54,6 +64,7 @@ struct GlassSpec {
     var tabs: [GlassItem] = []
     var actions: [GlassItem] = []
     var search = false
+    var searchImg = ""
     var accent: UIColor = .systemPink
 
     init(json: String) {
@@ -63,9 +74,10 @@ struct GlassSpec {
         hidden = o["hidden"] as? Bool ?? false
         active = o["active"] as? Int ?? -1
         search = o["search"] as? Bool ?? false
+        searchImg = o["searchImg"] as? String ?? ""
         func items(_ k: String) -> [GlassItem] {
             return (o[k] as? [[String: Any]] ?? []).map {
-                GlassItem(id: $0["id"] as? String ?? "", icon: $0["icon"] as? String ?? "circle", label: $0["label"] as? String ?? "")
+                GlassItem(id: $0["id"] as? String ?? "", icon: $0["icon"] as? String ?? "circle", label: $0["label"] as? String ?? "", img: $0["img"] as? String ?? "")
             }
         }
         tabs = items("tabs")
@@ -124,14 +136,14 @@ final class GlassGroup: UIView {
     }
 
     func setItems(_ new: [GlassItem]) {
-        let same = new.map { $0.id + $0.icon + $0.label } == items.map { $0.id + $0.icon + $0.label }
+        let same = new.map { $0.id + $0.icon + $0.label + $0.img } == items.map { $0.id + $0.icon + $0.label + $0.img }
         if same { return }
         buttons.forEach { $0.removeFromSuperview() }
         items = new
         buttons = new.map { item in
             let b = UIButton(type: .system)
             var c = UIButton.Configuration.plain()
-            c.image = UIImage(systemName: item.icon, withConfiguration: UIImage.SymbolConfiguration(pointSize: showLabels ? 19 : 21, weight: .regular))
+            c.image = item.image(size: showLabels ? 24 : 26)
             if showLabels {
                 c.title = item.label
                 c.imagePlacement = .top
@@ -216,10 +228,10 @@ final class GlassOverlay: UIView {
         actions.vertical = duo
         tabs.showLabels = !duo
         var tabItems = s.tabs
-        if duo && s.search { tabItems.append(GlassItem(id: "search", icon: "magnifyingglass", label: "Search")) }
+        if duo && s.search { tabItems.append(GlassItem(id: "search", icon: "magnifyingglass", label: "Search", img: s.searchImg)) }
         tabs.setItems(tabItems)
         actions.setItems(s.actions)
-        searchButton.setItems(!duo && s.search ? [GlassItem(id: "search", icon: "magnifyingglass", label: "Search")] : [])
+        searchButton.setItems(!duo && s.search ? [GlassItem(id: "search", icon: "magnifyingglass", label: "Search", img: s.searchImg)] : [])
         [tabs, actions, searchButton].forEach { $0.accent = s.accent }
         tabs.selectedIndex = s.active
         let hide = s.hidden || s.mode == "off"
