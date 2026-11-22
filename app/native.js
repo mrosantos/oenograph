@@ -1,3 +1,4 @@
+import {registerPlugin} from '@capacitor/core';
 // Only loaded inside the iPhone/iPad app (added by app/build.mjs).
 // The website shows bottle photos through its service worker ("_blob/<id>" links).
 // The app has no service worker, so this file turns those links into local photo links.
@@ -47,4 +48,49 @@
   var q=matchMedia('(min-width:450px) and (max-width:480px) and (max-height:720px) and (orientation:portrait) and (hover:none)');
   function set(){document.documentElement.classList.toggle('duo-rail',q.matches)}
   set();(q.addEventListener?q.addEventListener('change',set):q.addListener(set));
+})();
+
+// Real iOS Liquid Glass menu and buttons (drawn by ios/App/App/GlassBar.swift).
+// The page's own menu and round buttons stay in place, invisible, and the glass ones press them.
+(function(){
+  if(location.protocol!=='capacitor:')return;
+  var GlassBar=registerPlugin('GlassBar');
+  var html=document.documentElement;
+  var ICON={cellar:'waterbottle',drink:'wineglass',log:'list.bullet.rectangle',map:'safari'};
+  var upright=matchMedia('(max-width:600px) and (orientation:portrait)');
+  function mode(){return html.classList.contains('duo-rail')?'duo':upright.matches?'bottom':'off'}
+  function tabsOf(){var n=document.querySelector('nav');return n?Array.prototype.slice.call(n.querySelectorAll(':scope > button[data-t]')):[]}
+  function top(l){return document.querySelector('.top .plus[aria-label="'+l+'"]')}
+  var last='',queued=false;
+  function send(){
+    queued=false;
+    var m=mode();html.classList.toggle('native-glass',m!=='off');
+    var nav=document.querySelector('nav');if(!nav)return;
+    var nb=tabsOf();
+    var tabs=nb.map(function(b){var s=b.querySelector('span');return {id:'tab:'+b.dataset.t,icon:ICON[b.dataset.t]||'circle',label:(s?s.textContent:b.textContent).trim()}});
+    var active=nb.findIndex(function(b){return b.classList.contains('on')});
+    var actions=[];
+    if(top('Add wine'))actions.push({id:'add',icon:'plus',label:'Add wine'});
+    if(top('Settings')||typeof window.openSettings==='function')actions.push({id:'settings',icon:'gearshape',label:'Settings'});
+    var hidden=nav.classList.contains('hide')||document.body.classList.contains('kbd');
+    var accent=getComputedStyle(html).getPropertyValue('--acc').trim();
+    var spec=JSON.stringify({mode:m,hidden:hidden,active:active,tabs:tabs,actions:actions,search:!!top('Search'),accent:accent});
+    if(spec!==last){last=spec;GlassBar.update({spec:spec}).catch(function(){})}
+  }
+  function soon(){if(!queued){queued=true;requestAnimationFrame(send)}}
+  GlassBar.addListener('tap',function(e){
+    var id=e&&e.id||'';
+    if(id.indexOf('tab:')===0){var b=document.querySelector('nav > button[data-t="'+id.slice(4)+'"]');if(b)b.click()}
+    else if(id==='add'){var a=top('Add wine');if(a)a.click()}
+    else if(id==='search'){var s=top('Search');if(s)s.click()}
+    else if(id==='settings'){var t=top('Settings');if(t)t.click();else if(window.openSettings)window.openSettings()}
+    soon();
+  });
+  function start(){
+    new MutationObserver(soon).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+    addEventListener('resize',soon);
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change',soon);
+    send();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();

@@ -22,3 +22,7 @@ html.duo-rail .top:not(:has(.plus[aria-label="Search"])) .plus[aria-label="Setti
 html.duo-rail .top:not(:has(.plus[aria-label="Search"])):not(:has(.plus[aria-label="Add wine"])) .plus[aria-label="Settings"]{--k:0}
 html.duo-rail body:has(nav.hide) .top .plus{transform:translateX(200%)}
 html.duo-rail #toast{right:84px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
+
+/* When iOS draws the glass menu and buttons, hide the page's own (they stay pressable from the glass ones). */
+html.native-glass nav,html.native-glass body::after{visibility:hidden!important}
+html.native-glass .top .plus[aria-label="Add wine"],html.native-glass .top .plus[aria-label="Search"],html.native-glass .top .plus[aria-label="Settings"]{visibility:hidden!important}
