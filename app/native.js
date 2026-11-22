@@ -88,7 +88,7 @@ import {registerPlugin} from '@capacitor/core';
     if(top('Settings')||typeof window.openSettings==='function')actions.push({id:'settings',icon:'gearshape',img:img('set',topSvg('Settings')||document.querySelector('nav .navs svg')),label:'Settings'});
     var hidden=nav.classList.contains('hide')||document.body.classList.contains('kbd');
     var accent=getComputedStyle(html).getPropertyValue('--acc').trim();
-    var spec=JSON.stringify({mode:m,hidden:hidden,active:active,tabs:tabs,actions:actions,search:!!top('Search'),searchImg:img('search',topSvg('Search')),accent:accent});
+    var spec=JSON.stringify({mode:m,hidden:hidden,active:active,tabs:tabs,actions:actions,search:!!top('Search'),searchImg:img('search',topSvg('Search')),top:!!(document.getElementById('fbtt')&&document.getElementById('fbtt').classList.contains('on')),accent:accent});
     if(failed||spec===last)return;
     last=spec;
     GlassBar.update({spec:spec}).then(function(r){
@@ -106,6 +106,7 @@ import {registerPlugin} from '@capacitor/core';
     if(id.indexOf('tab:')===0){var b=document.querySelector('nav > button[data-t="'+id.slice(4)+'"]');if(b)b.click()}
     else if(id==='add'){var a=top('Add wine');if(a)a.click()}
     else if(id==='search'){var s=top('Search');if(s)s.click()}
+    else if(id==='top'){if(typeof window.backTop==='function')window.backTop();else{var f=document.getElementById('fbtt');if(f)f.click()}}
     else if(id==='settings'){var t=top('Settings');if(t)t.click();else if(window.openSettings)window.openSettings()}
     soon();
   });

@@ -66,6 +66,7 @@ struct GlassSpec {
     var actions: [GlassItem] = []
     var search = false
     var searchImg = ""
+    var top = false
     var accent: UIColor = .systemPink
 
     init(json: String) {
@@ -76,6 +77,7 @@ struct GlassSpec {
         active = o["active"] as? Int ?? -1
         search = o["search"] as? Bool ?? false
         searchImg = o["searchImg"] as? String ?? ""
+        top = o["top"] as? Bool ?? false
         func items(_ k: String) -> [GlassItem] {
             return (o[k] as? [[String: Any]] ?? []).map {
                 GlassItem(id: $0["id"] as? String ?? "", icon: $0["icon"] as? String ?? "circle", label: $0["label"] as? String ?? "", img: $0["img"] as? String ?? "")
@@ -107,6 +109,7 @@ final class GlassGroup: UIView {
     var showLabels = false
     var selectedIndex = -1
     var accent: UIColor = .systemPink
+    var plainTint: UIColor?
     var onTap: ((String) -> Void)?
 
     override init(frame: CGRect) {
@@ -186,7 +189,7 @@ final class GlassGroup: UIView {
                 let w = (bounds.width - inset * 2) / n
                 b.frame = CGRect(x: inset + CGFloat(i) * w, y: inset, width: w, height: bounds.height - inset * 2)
             }
-            b.tintColor = i == selectedIndex ? accent : .label
+            b.tintColor = i == selectedIndex ? accent : (plainTint ?? .label)
         }
         if selectedIndex >= 0 && selectedIndex < buttons.count {
             selection.isHidden = false
@@ -203,15 +206,18 @@ final class GlassOverlay: UIView {
     let tabs = GlassGroup()
     let actions = GlassGroup()
     let searchButton = GlassGroup()
+    let topButton = GlassGroup()   // "Back to top", shown once the list is scrolled down
     var spec = GlassSpec(json: "{}")
     var onTap: ((String) -> Void)? {
-        didSet { [tabs, actions, searchButton].forEach { $0.onTap = onTap } }
+        didSet { [tabs, actions, searchButton, topButton].forEach { $0.onTap = onTap } }
     }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .clear
-        [tabs, actions, searchButton].forEach { addSubview($0) }
+        [tabs, actions, searchButton, topButton].forEach { addSubview($0) }
+        topButton.alpha = 0
+        topButton.transform = CGAffineTransform(scaleX: 0.6, y: 0.6)
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
@@ -233,7 +239,10 @@ final class GlassOverlay: UIView {
         tabs.setItems(tabItems)
         actions.setItems(s.actions)
         searchButton.setItems(!duo && s.search ? [GlassItem(id: "search", icon: "magnifyingglass", label: "Search", img: s.searchImg)] : [])
-        [tabs, actions, searchButton].forEach { $0.accent = s.accent }
+        topButton.showLabels = true
+        topButton.setItems([GlassItem(id: "top", icon: "chevron.up", label: "Top")])
+        [tabs, actions, searchButton, topButton].forEach { $0.accent = s.accent }
+        topButton.plainTint = s.accent
         tabs.selectedIndex = s.active
         let hide = s.hidden || s.mode == "off"
         let animate = wasHidden != hide
@@ -242,13 +251,21 @@ final class GlassOverlay: UIView {
             self.searchButton.alpha = hide || duo || !s.search ? 0 : 1
             self.actions.alpha = hide || s.actions.isEmpty ? 0 : 1
         }
+        let showTop = !hide && s.top
+        if (topButton.alpha > 0.5) != showTop {
+            UIView.animate(withDuration: 0.25) {
+                self.topButton.alpha = showTop ? 1 : 0
+                self.topButton.transform = showTop ? .identity : CGAffineTransform(scaleX: 0.6, y: 0.6)
+            }
+        }
+        topButton.isUserInteractionEnabled = showTop
         tabs.isUserInteractionEnabled = !hide
         actions.isUserInteractionEnabled = !hide
         searchButton.isUserInteractionEnabled = !hide
         UIView.animate(withDuration: 0.35, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0) {
             self.setNeedsLayout()
             self.layoutIfNeeded()
-            [self.tabs, self.actions, self.searchButton].forEach { $0.setNeedsLayout(); $0.layoutIfNeeded() }
+            [self.tabs, self.actions, self.searchButton, self.topButton].forEach { $0.setNeedsLayout(); $0.layoutIfNeeded() }
         }
     }
 
@@ -263,6 +280,8 @@ final class GlassOverlay: UIView {
             actions.frame = CGRect(x: cx - w / 2, y: 172, width: w, height: ah)
             let th = tabs.length(cell: cell)
             tabs.frame = CGRect(x: cx - w / 2, y: H - max(safe.bottom, 12) - 6 - th, width: w, height: th)
+            topButton.bounds = CGRect(x: 0, y: 0, width: w, height: w)
+            topButton.center = CGPoint(x: cx, y: tabs.frame.minY - 10 - w / 2)
         } else {
             let h: CGFloat = 62, side: CGFloat = 16, gap: CGFloat = 10
             let y = H - max(safe.bottom, 12) - h + 4
@@ -273,6 +292,8 @@ final class GlassOverlay: UIView {
             let ah: CGFloat = 44
             let aw = CGFloat(max(actions.items.count, 1)) * 44 + 8
             actions.frame = CGRect(x: W - side - aw, y: safe.top + 14, width: aw, height: ah)
+            topButton.bounds = CGRect(x: 0, y: 0, width: 50, height: 50)
+            topButton.center = CGPoint(x: W - side - 25, y: y - 12 - 25)
         }
     }
 }
