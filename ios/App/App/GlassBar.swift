@@ -19,7 +19,7 @@ public class GlassBarPlugin: CAPPlugin, CAPBridgedPlugin {
         let json = call.getString("spec") ?? "{}"
         let spec = GlassSpec(json: json)
         DispatchQueue.main.async {
-            guard let host = self.bridge?.viewController?.view else { call.resolve(); return }
+            guard let host = self.bridge?.viewController?.view else { call.resolve(["info": "no host view"]); return }
             if self.overlay == nil {
                 let o = GlassOverlay(frame: host.bounds)
                 o.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -29,9 +29,14 @@ public class GlassBarPlugin: CAPPlugin, CAPBridgedPlugin {
             }
             if let o = self.overlay {
                 host.bringSubviewToFront(o)
+                o.frame = host.bounds
                 o.apply(spec)
+                o.layoutIfNeeded()
+                func r(_ v: UIView) -> String { let f = v.frame; return "\(Int(f.minX)),\(Int(f.minY)) \(Int(f.width))x\(Int(f.height)) a\(v.alpha)" }
+                call.resolve(["info": "\(spec.mode) host \(Int(host.bounds.width))x\(Int(host.bounds.height)) tabs[\(r(o.tabs))] actions[\(r(o.actions))]"])
+            } else {
+                call.resolve(["info": "no overlay"])
             }
-            call.resolve()
         }
     }
 }

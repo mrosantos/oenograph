@@ -61,10 +61,10 @@ import {registerPlugin} from '@capacitor/core';
   function mode(){return html.classList.contains('duo-rail')?'duo':upright.matches?'bottom':'off'}
   function tabsOf(){var n=document.querySelector('nav');return n?Array.prototype.slice.call(n.querySelectorAll(':scope > button[data-t]')):[]}
   function top(l){return document.querySelector('.top .plus[aria-label="'+l+'"]')}
-  var last='',queued=false;
+  var last='',queued=false,failed=false,shown=false;
   function send(){
     queued=false;
-    var m=mode();html.classList.toggle('native-glass',m!=='off');
+    var m=mode();if(m==='off'||failed)html.classList.remove('native-glass');
     var nav=document.querySelector('nav');if(!nav)return;
     var nb=tabsOf();
     var tabs=nb.map(function(b){var s=b.querySelector('span');return {id:'tab:'+b.dataset.t,icon:ICON[b.dataset.t]||'circle',label:(s?s.textContent:b.textContent).trim()}});
@@ -75,7 +75,18 @@ import {registerPlugin} from '@capacitor/core';
     var hidden=nav.classList.contains('hide')||document.body.classList.contains('kbd');
     var accent=getComputedStyle(html).getPropertyValue('--acc').trim();
     var spec=JSON.stringify({mode:m,hidden:hidden,active:active,tabs:tabs,actions:actions,search:!!top('Search'),accent:accent});
-    if(spec!==last){last=spec;GlassBar.update({spec:spec}).catch(function(){})}
+    if(failed||spec===last)return;
+    last=spec;
+    GlassBar.update({spec:spec}).then(function(r){
+      // Only hide the page's own buttons once iOS confirms it is drawing the glass ones.
+      if(m!=='off')html.classList.add('native-glass');
+      // Temporary: show what iOS drew, to check placement on the real phone.
+      if(!shown&&r&&r.info&&typeof window.toast==='function'){shown=true;window.toast('Glass: '+r.info,12000)}
+    }).catch(function(e){
+      failed=true;html.classList.remove('native-glass');
+      var msg='Glass menu error: '+((e&&(e.message||e.code))||e);
+      console.error(msg);if(typeof window.toast==='function')window.toast(msg,15000);
+    });
   }
   function soon(){if(!queued){queued=true;requestAnimationFrame(send)}}
   GlassBar.addListener('tap',function(e){
