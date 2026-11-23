@@ -48,13 +48,5 @@ html.duo-rail.native-glass .sw .lgb,html.duo-rail.native-glass .sw .mz{right:56p
 html.duo-rail.native-glass .sw .chip{right:52px}
 html.duo-rail.native-glass .sw .act,html.duo-rail.native-glass .sw .pd{right:46px}
 html.duo-rail.native-glass .sw .pd{border-radius:16px}
-/* Settings card (app): starts just below the camera on the closed Duo, Liquid Glass pickers and rows */
+/* Cards (Settings, wine info…) start just below the camera on the closed Duo */
 html.duo-rail :is(#info,#info2,#info3) .ic{top:112px}
-html.native-glass #info.setw .seg{border-radius:999px;padding:4px;min-height:44px;background:color-mix(in srgb,var(--card) 55%,transparent);-webkit-backdrop-filter:blur(20px) saturate(1.8);backdrop-filter:blur(20px) saturate(1.8);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--hl),inset 0 -1px 0 rgba(0,0,0,.08),0 10px 28px rgba(0,0,0,.14)}
-html.native-glass #info.setw .seg button{border-radius:999px;padding:11px 0;font-weight:500}
-html.native-glass #info.setw .seg button.on{color:var(--fg);font-weight:600}
-html.native-glass #info.setw .seg::before{top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/2);border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 18px rgba(0,0,0,.18);transition:transform .45s cubic-bezier(.3,1.3,.5,1)}
-@media (prefers-color-scheme:light){html.native-glass #info.setw .seg::before{background:linear-gradient(180deg,#fff,rgba(255,255,255,.75));border-color:rgba(0,0,0,.06);box-shadow:inset 0 1px 0 #fff,0 6px 18px rgba(0,0,0,.12)}}
-html.native-glass #info.setw .seg:has(button:nth-child(3))::before{width:calc((100% - 8px)/3)}
-html.native-glass #info.setw .seg:has(button:nth-child(4))::before{width:calc((100% - 8px)/4)}
-html.native-glass #info.setw .srow{border-radius:22px;padding:14px 16px;background:color-mix(in srgb,var(--card) 55%,transparent);-webkit-backdrop-filter:blur(20px) saturate(1.8);backdrop-filter:blur(20px) saturate(1.8);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--hl),0 8px 22px rgba(0,0,0,.10)}
