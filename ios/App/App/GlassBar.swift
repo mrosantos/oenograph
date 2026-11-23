@@ -17,6 +17,7 @@ public class GlassBarPlugin: CAPPlugin, CAPBridgedPlugin {
 
     private var overlay: GlassOverlay?
     private var sheet: SettingsSheet?
+    private let cardTransitions = CardTransitions()
 
     // Shows (or updates, or closes when the spec is empty) the native Settings card.
     @objc func settings(_ call: CAPPluginCall) {
@@ -37,15 +38,9 @@ public class GlassBarPlugin: CAPPlugin, CAPBridgedPlugin {
                 sh.onAction = { [weak self] id, value in self?.notifyListeners("settings", data: ["id": id, "value": value]) }
                 sh.onClose = { [weak self] in self?.sheet = nil; self?.notifyListeners("settings", data: ["id": "close", "value": ""]) }
                 let nav = UINavigationController(rootViewController: sh)
-                if let p = nav.sheetPresentationController {
-                    p.detents = [.large()]; p.prefersGrabberVisible = true
-                    // Closed iPhone Duo: the card starts just below the camera, not at the very top.
-                    if #available(iOS 16.0, *), let w = vc.view.window, SettingsSheet.isDuo(w) {
-                        let h = w.bounds.height - 112
-                        p.detents = [.custom(identifier: .init("duo")) { ctx in min(h, ctx.maximumDetentValue) }]
-                    }
-                }
-                nav.presentationController?.delegate = sh
+                // Our own card presentation: full width, from just below the camera to past the bottom edge.
+                nav.modalPresentationStyle = .custom
+                nav.transitioningDelegate = self.cardTransitions
                 vc.present(nav, animated: true)
                 self.sheet = sh
             }
@@ -300,7 +295,9 @@ final class GlassOverlay: UIView {
         tabs.selectedIndex = s.active
         let hide = s.hidden || s.mode == "off"
         let animate = wasHidden != hide
-        UIView.animate(withDuration: animate ? 0.25 : 0.0) {
+        // Menus fade out quickly, and fade back in gently once the card has gone.
+        UIView.animate(withDuration: animate ? (hide ? 0.2 : 0.5) : 0.0, delay: animate && !hide ? 0.08 : 0,
+                       options: [.curveEaseInOut, .beginFromCurrentState, .allowUserInteraction]) {
             self.tabs.alpha = hide ? 0 : 1
             self.searchButton.alpha = hide || duo || !s.search ? 0 : 1
             self.actions.alpha = hide || s.actions.isEmpty ? 0 : 1
@@ -449,6 +446,7 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
     private let subtitleLabel = UILabel()
     private let header = UIView()
     private let closeButton = UIButton(type: .system)
+    private var pendingLook: DispatchWorkItem?
 
     init(spec: SheetSpec) {
         self.spec = spec
@@ -487,6 +485,10 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
         super.viewDidLoad()
         navigationController?.setNavigationBarHidden(true, animated: false)
         tableView.keyboardDismissMode = .interactive
+        // Use the card's full width (not narrowed by the clock strip's safe area).
+        tableView.insetsLayoutMarginsFromSafeArea = false
+        tableView.cellLayoutMarginsFollowReadableWidth = false
+        tableView.layoutMargins = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         tableView.sectionHeaderTopPadding = 4
         tableView.contentInset.top = 6
 
@@ -511,7 +513,7 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
         closeButton.configuration = bc
         closeButton.accessibilityLabel = "Close"
         closeButton.addAction(UIAction { [weak self] _ in self?.dismiss(animated: true) }, for: .touchUpInside)
-        view.addSubview(closeButton)
+        // The ✕ lives on the card itself (not in the scrolling list), so it never moves while scrolling.
 
         style()
         model = compact(spec)
@@ -535,26 +537,24 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
         let size: CGFloat = 44
         let W = view.bounds.width
         let duo = isDuo
+        // Duo: centred under the status icons, the same column as the glass menu.
         let x = duo ? (W - 48 - size / 2) : (W - 16 - size)
         let y = closeTop
-        closeButton.frame = CGRect(x: x, y: tableView.contentOffset.y + tableView.adjustedContentInset.top + y - tableView.adjustedContentInset.top, width: size, height: size)
-        view.bringSubviewToFront(closeButton)
+        if let host = navigationController?.view {
+            if closeButton.superview !== host { host.addSubview(closeButton) }
+            if closeButton.frame != CGRect(x: x, y: y, width: size, height: size) { closeButton.frame = CGRect(x: x, y: y, width: size, height: size) }
+            host.bringSubviewToFront(closeButton)
+        }
     }
 
     static func isDuo(_ w: UIWindow) -> Bool { w.bounds.width >= 450 && w.bounds.width <= 480 && w.bounds.height <= 720 }
     private var isDuo: Bool { view.window.map { SettingsSheet.isDuo($0) } ?? false }
     // Top of the close button inside the card: just below the clock strip on the Duo (strip ends ~161pt).
     private var closeTop: CGFloat {
-        guard isDuo else { return 14 }
-        // Where the card's top rests (from its height, so it stays steady while the card slides in).
-        guard let w = view.window else { return 60 }
-        let originY = w.bounds.height - (navigationController?.view.bounds.height ?? view.bounds.height)
-        return max(12, 168 - originY)
+        guard isDuo, let w = view.window else { return 14 }
+        return max(12, 168 - CardPresentation.top(in: w))
     }
 
-    override func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        view.setNeedsLayout()   // keep the close button in place while the list scrolls
-    }
 
     // The page re-sends the card after every change. If only values changed, refresh just the
     // rows whose text changed and leave pickers and switches alone so their own animation finishes.
@@ -572,10 +572,24 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
         let oldModel = model
         spec = s
         guard isViewLoaded else { return }
-        style()
         let new = compact(s)
         model = new
         let look = old.scale != s.scale || old.theme != s.theme || old.paper != s.paper || old.card != s.card || old.fg != s.fg
+        pendingLook?.cancel()
+        if look && sameShape(oldModel, new) {
+            // Let the picker's pill finish gliding to the new choice, then fade the whole card to the new look.
+            let w = DispatchWorkItem { [weak self] in
+                guard let self = self, let host = self.navigationController?.view else { return }
+                UIView.transition(with: host, duration: 0.35, options: [.transitionCrossDissolve, .allowUserInteraction]) {
+                    self.style()
+                    self.tableView.reloadData()
+                }
+            }
+            pendingLook = w
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.32, execute: w)
+            return
+        }
+        style()
         if !look && sameShape(oldModel, new) {
             var changed: [IndexPath] = []
             for (si, sec) in new.enumerated() {
@@ -810,5 +824,134 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
         textField.resignFirstResponder()
         if let k = textField.accessibilityIdentifier { onAction?(k, fieldText[k] ?? "") }
         return true
+    }
+}
+
+
+// MARK: - Card presentation
+// The Settings card slides up full width, from just below the camera (Duo) or the status bar, and runs
+// past the bottom edge of the screen. Swipe down or tap outside to close.
+
+final class CardTransitions: NSObject, UIViewControllerTransitioningDelegate {
+    func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
+        return CardPresentation(presentedViewController: presented, presenting: presenting)
+    }
+    func animationController(forPresented presented: UIViewController, presenting: UIViewController, source: UIViewController) -> UIViewControllerAnimatedTransitioning? { CardAnimator(presenting: true) }
+    func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? { CardAnimator(presenting: false) }
+}
+
+final class CardAnimator: NSObject, UIViewControllerAnimatedTransitioning {
+    let presenting: Bool
+    init(presenting: Bool) { self.presenting = presenting }
+    func transitionDuration(using ctx: UIViewControllerContextTransitioning?) -> TimeInterval { presenting ? 0.5 : 0.32 }
+    func animateTransition(using ctx: UIViewControllerContextTransitioning) {
+        if presenting {
+            guard let v = ctx.view(forKey: .to), let vc = ctx.viewController(forKey: .to) else { ctx.completeTransition(false); return }
+            let end = ctx.finalFrame(for: vc)
+            ctx.containerView.addSubview(v)
+            v.frame = end.offsetBy(dx: 0, dy: ctx.containerView.bounds.height - end.minY)
+            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.9, initialSpringVelocity: 0, options: [.allowUserInteraction]) {
+                v.frame = end
+            } completion: { _ in ctx.completeTransition(!ctx.transitionWasCancelled) }
+        } else {
+            guard let v = ctx.view(forKey: .from) else { ctx.completeTransition(false); return }
+            UIView.animate(withDuration: 0.32, delay: 0, options: [.curveEaseIn]) {
+                v.frame.origin.y = ctx.containerView.bounds.height
+            } completion: { _ in ctx.completeTransition(!ctx.transitionWasCancelled) }
+        }
+    }
+}
+
+final class CardPresentation: UIPresentationController, UIGestureRecognizerDelegate {
+    private let dim = UIView()
+    private let grabber = UIView()
+    private let overhang: CGFloat = 60      // how far the card runs past the bottom of the screen
+
+    static func top(in w: UIWindow) -> CGFloat {
+        if SettingsSheet.isDuo(w) { return 112 }   // just below the camera
+        return w.safeAreaInsets.top + 10
+    }
+
+    override var frameOfPresentedViewInContainerView: CGRect {
+        guard let c = containerView else { return .zero }
+        let top = c.window.map { CardPresentation.top(in: $0) } ?? 50
+        return CGRect(x: 0, y: top, width: c.bounds.width, height: c.bounds.height - top + overhang)
+    }
+
+    override func presentationTransitionWillBegin() {
+        guard let c = containerView else { return }
+        dim.backgroundColor = UIColor.black.withAlphaComponent(0.32)
+        dim.frame = c.bounds
+        dim.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        dim.alpha = 0
+        dim.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(close)))
+        c.insertSubview(dim, at: 0)
+        presentedViewController.additionalSafeAreaInsets.bottom = overhang
+        if let v = presentedView {
+            v.layer.cornerRadius = 30
+            v.layer.cornerCurve = .continuous
+            v.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+            v.clipsToBounds = true
+            grabber.backgroundColor = UIColor.secondaryLabel.withAlphaComponent(0.5)
+            grabber.layer.cornerRadius = 2.5
+            v.addSubview(grabber)
+            let pan = UIPanGestureRecognizer(target: self, action: #selector(drag(_:)))
+            pan.delegate = self
+            v.addGestureRecognizer(pan)
+        }
+        presentedViewController.transitionCoordinator?.animate(alongsideTransition: { _ in self.dim.alpha = 1 })
+    }
+    override func dismissalTransitionWillBegin() {
+        presentedViewController.transitionCoordinator?.animate(alongsideTransition: { _ in self.dim.alpha = 0 })
+    }
+    override func containerViewDidLayoutSubviews() {
+        super.containerViewDidLayoutSubviews()
+        if !dragging { presentedView?.frame = frameOfPresentedViewInContainerView }
+        if let v = presentedView {
+            grabber.frame = CGRect(x: (v.bounds.width - 36) / 2, y: 6, width: 36, height: 5)
+            v.bringSubviewToFront(grabber)
+        }
+    }
+
+    @objc private func close() { presentedViewController.dismiss(animated: true) }
+
+    private var dragging = false
+    private var list: UIScrollView? {
+        let nav = presentedViewController as? UINavigationController
+        return (nav?.topViewController as? UITableViewController)?.tableView
+    }
+    private func listAtTop() -> Bool {
+        guard let l = list else { return true }
+        return l.contentOffset.y <= -l.adjustedContentInset.top + 1
+    }
+    func gestureRecognizerShouldBegin(_ g: UIGestureRecognizer) -> Bool {
+        guard let p = g as? UIPanGestureRecognizer, let v = presentedView else { return false }
+        let vel = p.velocity(in: v)
+        return vel.y > 0 && abs(vel.y) > abs(vel.x) && listAtTop()
+    }
+    func gestureRecognizer(_ g: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith o: UIGestureRecognizer) -> Bool { true }
+
+    @objc private func drag(_ p: UIPanGestureRecognizer) {
+        guard let v = presentedView, let c = containerView else { return }
+        let base = frameOfPresentedViewInContainerView
+        let ty = max(0, p.translation(in: c).y)
+        switch p.state {
+        case .began:
+            dragging = true
+        case .changed:
+            if let l = list { l.contentOffset.y = -l.adjustedContentInset.top }   // the list stays put while the card follows the finger
+            v.frame.origin.y = base.minY + ty
+            dim.alpha = max(0, 1 - ty / 400)
+        default:
+            dragging = false
+            if ty > 120 || p.velocity(in: c).y > 900 {
+                presentedViewController.dismiss(animated: true)
+            } else {
+                UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.85, initialSpringVelocity: 0, options: [.allowUserInteraction]) {
+                    v.frame = base
+                    self.dim.alpha = 1
+                }
+            }
+        }
     }
 }

@@ -81,6 +81,10 @@ import {registerPlugin} from '@capacitor/core';
   }
   // "•••" drawn in the same style as the other icons.
   var MORE=new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>','image/svg+xml').documentElement;
+  // Fixed icons for + and Search, so the capsule looks the same on every tab (some tabs have no Search of their own).
+  function svgOf(t){return new DOMParser().parseFromString(t,'image/svg+xml').documentElement}
+  var ADD=svgOf('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>');
+  var SRCH=svgOf('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>');
   function topSvg(l){var b=top(l);return b&&b.querySelector('svg')}
   // Big page title: when it changes (Drink to Log to Map), the old word slides out and the new one slides in.
   var lastTitle='',lastHTML='',lastIdx=-1;
@@ -108,8 +112,8 @@ import {registerPlugin} from '@capacitor/core';
     var active=nb.findIndex(function(b){return b.classList.contains('on')});
     var actions=[];
     // The same three glass buttons on every page: + , Search and ••• (Settings).
-    actions.push({id:'add',icon:'plus',img:img('add',topSvg('Add wine')),label:'Add wine'});
-    actions.push({id:'search',icon:'magnifyingglass',img:img('search',topSvg('Search')),label:'Search'});
+    actions.push({id:'add',icon:'plus',img:img('add',ADD),label:'Add wine'});
+    actions.push({id:'search',icon:'magnifyingglass',img:img('search',SRCH),label:'Search'});
     actions.push({id:'settings',icon:'ellipsis',img:img('more',MORE),label:'Settings'});
     var sheet=['info','info2','info3'].some(function(i){var e=document.getElementById(i);return e&&e.style.display&&e.style.display!=='none'});
     var hidden=nav.classList.contains('hide')||document.body.classList.contains('kbd')||sheet;
