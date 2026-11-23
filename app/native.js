@@ -78,8 +78,25 @@ import {registerPlugin} from '@capacitor/core';
   // "•••" drawn in the same style as the other icons.
   var MORE=new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>','image/svg+xml').documentElement;
   function topSvg(l){var b=top(l);return b&&b.querySelector('svg')}
+  // Big page title: when it changes (Drink to Log to Map), the old word slides out and the new one slides in.
+  var lastTitle='',lastHTML='',lastIdx=-1;
+  function titleAnim(){
+    var h=document.querySelector('.top h1:not(.tghost)');if(!h)return;
+    var t=h.textContent,idx=tabsOf().findIndex(function(b){return b.classList.contains('on')});
+    if(lastTitle&&t!==lastTitle&&h.animate&&h.parentNode){
+      var d=idx>=lastIdx?1:-1,p=h.parentNode,ez='cubic-bezier(.33,.1,.25,1)';
+      if(getComputedStyle(p).position==='static')p.style.position='relative';
+      var g=document.createElement('h1');g.className='tghost';g.setAttribute('aria-hidden','true');g.innerHTML=lastHTML;
+      g.style.cssText='position:absolute;margin:0;left:'+h.offsetLeft+'px;top:'+h.offsetTop+'px;white-space:nowrap;pointer-events:none';
+      p.appendChild(g);
+      g.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateX('+(-28*d)+'px)'}],{duration:200,easing:ez,fill:'forwards'}).onfinish=function(){g.remove()};
+      h.animate([{opacity:0,transform:'translateX('+(28*d)+'px)'},{opacity:1,transform:'none'}],{duration:360,delay:110,easing:ez,fill:'backwards'});
+    }
+    lastTitle=t;lastIdx=idx;lastHTML=h.innerHTML;
+  }
   function send(){
     queued=false;
+    try{titleAnim()}catch(e){}
     var m=mode();if(m==='off'||failed)html.classList.remove('native-glass');
     var nav=document.querySelector('nav');if(!nav)return;
     var nb=tabsOf();

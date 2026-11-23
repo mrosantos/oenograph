@@ -42,3 +42,9 @@ html.native-glass #app>.btns:has(>button[onclick^="drinkW"]){position:fixed;z-in
 html.duo-rail.native-glass #app>.btns:has(>button[onclick^="drinkW"]){right:84px}
 html.native-glass #app>.btns:has(>button[onclick^="drinkW"])>button{pointer-events:auto;flex:0 1 auto;min-width:96px;height:50px;padding:0 22px;border-radius:25px;background:var(--glass);-webkit-backdrop-filter:var(--bf);backdrop-filter:var(--bf);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--hl),0 8px 24px rgba(0,0,0,.22);color:var(--fg);font-weight:600}
 html.native-glass #app>.btns:has(>button[onclick^="drinkW"])>button.p{background:var(--acc);border-color:transparent;color:#fff}
+/* Cards reach under the glass on the closed Duo, but their buttons stay clear of it */
+html.duo-rail.native-glass .sw .lact{right:62px}
+html.duo-rail.native-glass .sw .lgb,html.duo-rail.native-glass .sw .mz{right:56px}
+html.duo-rail.native-glass .sw .chip{right:52px}
+html.duo-rail.native-glass .sw .act,html.duo-rail.native-glass .sw .pd{right:46px}
+html.duo-rail.native-glass .sw .pd{border-radius:16px}
