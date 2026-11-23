@@ -69,12 +69,14 @@ import {registerPlugin} from '@capacitor/core';
     if(IMG[key])return IMG[key];
     if(!pending[key]){
       pending[key]=1;
-      var c=svg.cloneNode(true);c.setAttribute('width','72');c.setAttribute('height','72');c.setAttribute('xmlns','http://www.w3.org/2000/svg');
+      var c=svg.cloneNode(true);if(c.getAttribute('stroke-width'))c.setAttribute('stroke-width','1.7');c.setAttribute('width','72');c.setAttribute('height','72');c.setAttribute('xmlns','http://www.w3.org/2000/svg');
       var src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(c).replace(/currentColor/g,'#000'));
       var im=new Image();im.onload=function(){try{var cv=document.createElement('canvas');cv.width=cv.height=72;cv.getContext('2d').drawImage(im,0,0,72,72);IMG[key]=cv.toDataURL('image/png').split(',')[1];soon()}catch(e){}};im.src=src;
     }
     return '';
   }
+  // "•••" drawn in the same style as the other icons.
+  var MORE=new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>','image/svg+xml').documentElement;
   function topSvg(l){var b=top(l);return b&&b.querySelector('svg')}
   function send(){
     queued=false;
@@ -84,13 +86,10 @@ import {registerPlugin} from '@capacitor/core';
     var tabs=nb.map(function(b){var s=b.querySelector('span');return {id:'tab:'+b.dataset.t,icon:ICON[b.dataset.t]||'circle',img:img('t'+b.dataset.t,b.querySelector('svg')),label:(s?s.textContent:b.textContent).trim()}});
     var active=nb.findIndex(function(b){return b.classList.contains('on')});
     var actions=[];
-    if(top('Add wine'))actions.push({id:'add',icon:'plus',img:img('add',topSvg('Add wine')),label:'Add wine'});
-    if(top('Search'))actions.push({id:'search',icon:'magnifyingglass',img:img('search',topSvg('Search')),label:'Search'});
-    // "•••" opens a small iOS menu with Settings (and Cellar insights when the page has it).
-    var more=[{id:'settings',icon:'gearshape',label:(top('Settings')&&top('Settings').getAttribute('aria-label'))||'Settings'}];
-    var ins=document.querySelector('[onclick="openStats()"]');
-    if(ins)more.unshift({id:'insights',icon:'chart.bar',label:ins.textContent.replace(/[›>]/g,'').trim()||'Cellar insights'});
-    actions.push({id:'more',icon:'ellipsis',label:'More',menu:more});
+    // The same three glass buttons on every page: + , Search and ••• (Settings).
+    actions.push({id:'add',icon:'plus',img:img('add',topSvg('Add wine')),label:'Add wine'});
+    actions.push({id:'search',icon:'magnifyingglass',img:img('search',topSvg('Search')),label:'Search'});
+    actions.push({id:'settings',icon:'ellipsis',img:img('more',MORE),label:'Settings'});
     var hidden=nav.classList.contains('hide')||document.body.classList.contains('kbd');
     var accent=getComputedStyle(html).getPropertyValue('--acc').trim();
     var spec=JSON.stringify({mode:m,hidden:hidden,active:active,tabs:tabs,actions:actions,search:false,top:!!(document.getElementById('fbtt')&&document.getElementById('fbtt').classList.contains('on')),accent:accent});
@@ -109,10 +108,9 @@ import {registerPlugin} from '@capacitor/core';
   GlassBar.addListener('tap',function(e){
     var id=e&&e.id||'';
     if(id.indexOf('tab:')===0){var b=document.querySelector('nav > button[data-t="'+id.slice(4)+'"]');if(b)b.click()}
-    else if(id==='add'){var a=top('Add wine');if(a)a.click()}
-    else if(id==='search'){var s=top('Search');if(s)s.click()}
+    else if(id==='add'){var a=top('Add wine');if(a)a.click();else if(window.newW)window.newW()}
+    else if(id==='search'){var s=top('Search');if(s)s.click();else{var c=document.querySelector('nav > button[data-t="cellar"]');if(c)c.click();setTimeout(function(){var s2=top('Search');if(s2)s2.click();else if(window.openSearch)window.openSearch()},350)}}
     else if(id==='top'){if(typeof window.backTop==='function')window.backTop();else{var f=document.getElementById('fbtt');if(f)f.click()}}
-    else if(id==='insights'){if(typeof window.openStats==='function')window.openStats()}
     else if(id==='settings'){var t=top('Settings');if(t)t.click();else if(window.openSettings)window.openSettings()}
     soon();
   });
