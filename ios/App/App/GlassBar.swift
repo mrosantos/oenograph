@@ -37,7 +37,14 @@ public class GlassBarPlugin: CAPPlugin, CAPBridgedPlugin {
                 sh.onAction = { [weak self] id, value in self?.notifyListeners("settings", data: ["id": id, "value": value]) }
                 sh.onClose = { [weak self] in self?.sheet = nil; self?.notifyListeners("settings", data: ["id": "close", "value": ""]) }
                 let nav = UINavigationController(rootViewController: sh)
-                if let p = nav.sheetPresentationController { p.detents = [.large()]; p.prefersGrabberVisible = true }
+                if let p = nav.sheetPresentationController {
+                    p.detents = [.large()]; p.prefersGrabberVisible = true
+                    // Closed iPhone Duo: the card starts just below the camera, not at the very top.
+                    if #available(iOS 16.0, *), let w = vc.view.window, SettingsSheet.isDuo(w) {
+                        let h = w.bounds.height - 112
+                        p.detents = [.custom(identifier: .init("duo")) { ctx in min(h, ctx.maximumDetentValue) }]
+                    }
+                }
                 nav.presentationController?.delegate = sh
                 vc.present(nav, animated: true)
                 self.sheet = sh
@@ -59,6 +66,9 @@ public class GlassBarPlugin: CAPPlugin, CAPBridgedPlugin {
                 host.addSubview(o)
                 self.overlay = o
             }
+            // Follow the app's own Appearance choice (Light / Dark / Auto), so glass and sheets match the page.
+            let style: UIUserInterfaceStyle = spec.theme == "dark" ? .dark : spec.theme == "light" ? .light : .unspecified
+            if let w = host.window, w.overrideUserInterfaceStyle != style { w.overrideUserInterfaceStyle = style }
             if let o = self.overlay {
                 host.bringSubviewToFront(o)
                 o.frame = host.bounds
@@ -100,11 +110,13 @@ struct GlassSpec {
     var searchImg = ""
     var top = false
     var accent: UIColor = .systemPink
+    var theme = "auto"
 
     init(json: String) {
         guard let data = json.data(using: .utf8),
               let o = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return }
         mode = o["mode"] as? String ?? "off"
+        theme = o["theme"] as? String ?? "auto"
         hidden = o["hidden"] as? Bool ?? false
         active = o["active"] as? Int ?? -1
         search = o["search"] as? Bool ?? false
@@ -431,12 +443,12 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
     var onClose: (() -> Void)?
     var closedByPage = false
     private var notified = false
-    private func notifyClose() {
-        if notified || closedByPage { return }
-        notified = true
-        onClose?()
-    }
     private var fieldText: [String: String] = [:]
+    private var model: [SheetSection] = []          // what is shown (compacted from the page's sections)
+    private let titleLabel = UILabel()
+    private let subtitleLabel = UILabel()
+    private let header = UIView()
+    private let closeButton = UIButton(type: .system)
 
     init(spec: SheetSpec) {
         self.spec = spec
@@ -444,43 +456,141 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
     }
     required init?(coder: NSCoder) { fatalError("not used") }
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        navigationItem.largeTitleDisplayMode = .always
-        navigationController?.navigationBar.prefersLargeTitles = true
-        navigationItem.rightBarButtonItem = UIBarButtonItem(systemItem: .close, primaryAction: UIAction { [weak self] _ in self?.dismiss(animated: true) })
-        tableView.keyboardDismissMode = .interactive
-        tableView.sectionHeaderTopPadding = 6
-        style()
-        tableView.backgroundColor = spec.paper ?? .systemGroupedBackground
+    private func notifyClose() {
+        if notified || closedByPage { return }
+        notified = true
+        onClose?()
     }
 
-    // Same layout as before: refresh only the rows that changed, and leave a switch or picker the
-    // person just moved alone so its own animation can finish.
-    private func sameShape(_ a: SheetSpec, _ b: SheetSpec) -> Bool {
-        guard a.sections.count == b.sections.count, a.scale == b.scale, a.theme == b.theme else { return false }
-        for (x, y) in zip(a.sections, b.sections) {
+    // Pickers with up to 3 choices sit on one line next to their name; longer lists (Language)
+    // become a pop-up menu. They share one group at the top, like the iPhone's own Settings.
+    private func compact(_ s: SheetSpec) -> [SheetSection] {
+        var out: [SheetSection] = []
+        var group = SheetSection()
+        func flush() { if !group.rows.isEmpty { out.append(group); group = SheetSection() } }
+        for sec in s.sections {
+            if sec.rows.count == 1, sec.rows[0].kind == "seg" {
+                var r = sec.rows[0]
+                r.title = sec.header
+                r.kind = r.options.count > 3 ? "menu" : "segline"
+                group.rows.append(r)
+            } else {
+                flush()
+                out.append(sec)
+            }
+        }
+        flush()
+        return out
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        navigationController?.setNavigationBarHidden(true, animated: false)
+        tableView.keyboardDismissMode = .interactive
+        tableView.sectionHeaderTopPadding = 4
+        tableView.contentInset.top = 6
+
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.minimumScaleFactor = 0.7
+        subtitleLabel.numberOfLines = 0
+        [titleLabel, subtitleLabel].forEach { $0.translatesAutoresizingMaskIntoConstraints = false; header.addSubview($0) }
+        NSLayoutConstraint.activate([
+            titleLabel.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: header.trailingAnchor, constant: -76),
+            titleLabel.topAnchor.constraint(equalTo: header.topAnchor, constant: 18),
+            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            subtitleLabel.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -76),
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
+            subtitleLabel.bottomAnchor.constraint(equalTo: header.bottomAnchor, constant: -6)
+        ])
+
+        var bc: UIButton.Configuration
+        if #available(iOS 26.0, *) { bc = .glass() } else { bc = .gray() }
+        bc.image = UIImage(systemName: "xmark", withConfiguration: UIImage.SymbolConfiguration(pointSize: 16, weight: .semibold))
+        bc.cornerStyle = .capsule
+        closeButton.configuration = bc
+        closeButton.accessibilityLabel = "Close"
+        closeButton.addAction(UIAction { [weak self] _ in self?.dismiss(animated: true) }, for: .touchUpInside)
+        view.addSubview(closeButton)
+
+        style()
+        model = compact(spec)
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // Header height follows its text.
+        let w = tableView.bounds.width
+        if w > 0 {
+            var h = header.systemLayoutSizeFitting(CGSize(width: w, height: 0), withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel).height
+            // On the Duo the close button sits under the clock strip; start the list below it so they never overlap.
+            if isDuo { h = max(h, closeTop + 44 + 8) }
+            if tableView.tableHeaderView !== header || abs(header.frame.height - h) > 0.5 {
+                header.frame = CGRect(x: 0, y: 0, width: w, height: h)
+                tableView.tableHeaderView = header
+            }
+        }
+        // Close button: on the closed iPhone Duo it sits in the right-hand column, just below the
+        // clock strip (where the + / Search capsule is); elsewhere at the top right.
+        let size: CGFloat = 44
+        let W = view.bounds.width
+        let duo = isDuo
+        let x = duo ? (W - 48 - size / 2) : (W - 16 - size)
+        let y = closeTop
+        closeButton.frame = CGRect(x: x, y: tableView.contentOffset.y + tableView.adjustedContentInset.top + y - tableView.adjustedContentInset.top, width: size, height: size)
+        view.bringSubviewToFront(closeButton)
+    }
+
+    static func isDuo(_ w: UIWindow) -> Bool { w.bounds.width >= 450 && w.bounds.width <= 480 && w.bounds.height <= 720 }
+    private var isDuo: Bool { view.window.map { SettingsSheet.isDuo($0) } ?? false }
+    // Top of the close button inside the card: just below the clock strip on the Duo (strip ends ~161pt).
+    private var closeTop: CGFloat {
+        guard isDuo else { return 14 }
+        // Where the card's top rests (from its height, so it stays steady while the card slides in).
+        guard let w = view.window else { return 60 }
+        let originY = w.bounds.height - (navigationController?.view.bounds.height ?? view.bounds.height)
+        return max(12, 168 - originY)
+    }
+
+    override func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        view.setNeedsLayout()   // keep the close button in place while the list scrolls
+    }
+
+    // The page re-sends the card after every change. If only values changed, refresh just the
+    // rows whose text changed and leave pickers and switches alone so their own animation finishes.
+    private func sameShape(_ a: [SheetSection], _ b: [SheetSection]) -> Bool {
+        guard a.count == b.count else { return false }
+        for (x, y) in zip(a, b) {
             if x.rows.count != y.rows.count || x.header != y.header || x.footer != y.footer { return false }
-            for (p, q) in zip(x.rows, y.rows) where p.kind != q.kind || p.id != q.id { return false }
+            for (p, q) in zip(x.rows, y.rows) where p.kind != q.kind || p.id != q.id || p.options != q.options || p.title != q.title { return false }
         }
         return true
     }
 
     func apply(_ s: SheetSpec) {
         let old = spec
+        let oldModel = model
         spec = s
-        style()
         guard isViewLoaded else { return }
-        if sameShape(old, s) {
+        style()
+        let new = compact(s)
+        model = new
+        let look = old.scale != s.scale || old.theme != s.theme || old.paper != s.paper || old.card != s.card || old.fg != s.fg
+        if !look && sameShape(oldModel, new) {
             var changed: [IndexPath] = []
-            for (si, sec) in s.sections.enumerated() {
-                for (ri, row) in sec.rows.enumerated() {
-                    let o = old.sections[si].rows[ri]
-                    if row.kind == "toggle" || row.kind == "seg" || row.kind == "field" { continue }
-                    if o.title != row.title || o.subtitle != row.subtitle || o.danger != row.danger { changed.append(IndexPath(row: ri, section: si)) }
+            for (si, sec) in new.enumerated() {
+                for (ri, row) in sec.rows.enumerated() where ["row", "info"].contains(row.kind) {
+                    let o = oldModel[si].rows[ri]
+                    if o.subtitle != row.subtitle || o.danger != row.danger { changed.append(IndexPath(row: ri, section: si)) }
                 }
             }
             if !changed.isEmpty { tableView.reloadRows(at: changed, with: .none) }
+            // A pop-up menu shows its current choice in its title: refresh it in place.
+            for (si, sec) in new.enumerated() {
+                for (ri, row) in sec.rows.enumerated() where row.kind == "menu" && oldModel[si].rows[ri].selected != row.selected {
+                    tableView.reloadRows(at: [IndexPath(row: ri, section: si)], with: .none)
+                }
+            }
         } else {
             tableView.reloadData()
         }
@@ -488,74 +598,81 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
 
     private func style() {
         let s = spec
-        title = s.title
-        if #available(iOS 26.0, *) { navigationItem.subtitle = s.subtitle.isEmpty ? nil : s.subtitle }
         let style: UIUserInterfaceStyle = s.theme == "dark" ? .dark : s.theme == "light" ? .light : .unspecified
         navigationController?.overrideUserInterfaceStyle = style
+        overrideUserInterfaceStyle = style
         view.tintColor = s.accent
-        navigationController?.view.tintColor = s.accent
-        let fg = s.fg ?? .label
-        if let nb = navigationController?.navigationBar {
-            nb.largeTitleTextAttributes = [.font: OenoFont.display(38 * s.scale), .foregroundColor: fg]
-            nb.titleTextAttributes = [.font: OenoFont.display(22 * s.scale), .foregroundColor: fg]
-        }
-        if isViewLoaded {
-            tableView.backgroundColor = s.paper ?? .systemGroupedBackground
-            navigationController?.view.backgroundColor = s.paper
-        }
-    }
-
-    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let h = spec.sections[section].header
-        if h.isEmpty { return nil }
-        let v = UIView()
-        let l = UILabel()
-        l.text = h
-        l.font = OenoFont.serif(19 * spec.scale)
-        l.textColor = spec.fg ?? .label
-        l.adjustsFontForContentSizeCategory = false
-        l.translatesAutoresizingMaskIntoConstraints = false
-        v.addSubview(l)
-        NSLayoutConstraint.activate([
-            l.leadingAnchor.constraint(equalTo: v.layoutMarginsGuide.leadingAnchor, constant: 4),
-            l.trailingAnchor.constraint(equalTo: v.layoutMarginsGuide.trailingAnchor),
-            l.topAnchor.constraint(equalTo: v.topAnchor, constant: 14),
-            l.bottomAnchor.constraint(equalTo: v.bottomAnchor, constant: -6)
-        ])
-        return v
-    }
-
-    override func tableView(_ tableView: UITableView, willDisplayFooterView view: UIView, forSection section: Int) {
-        guard let f = view as? UITableViewHeaderFooterView else { return }
-        var c = f.defaultContentConfiguration()
-        c.text = spec.sections[section].footer
-        c.textProperties.font = .systemFont(ofSize: 13 * spec.scale)
-        c.textProperties.color = spec.mut ?? .secondaryLabel
-        f.contentConfiguration = c
+        titleLabel.text = s.title
+        titleLabel.font = OenoFont.display(40 * s.scale)
+        titleLabel.textColor = s.fg ?? .label
+        subtitleLabel.text = s.subtitle
+        subtitleLabel.font = .systemFont(ofSize: 14 * s.scale)
+        subtitleLabel.textColor = s.mut ?? .secondaryLabel
+        closeButton.tintColor = s.fg ?? .label
+        tableView.backgroundColor = s.paper ?? .systemGroupedBackground
+        navigationController?.view.backgroundColor = s.paper
+        view.setNeedsLayout()
     }
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         if navigationController?.isBeingDismissed ?? isBeingDismissed { notifyClose() }
     }
-    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-        notifyClose()
-    }
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) { notifyClose() }
 
-    override func numberOfSections(in tableView: UITableView) -> Int { return spec.sections.count }
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { return spec.sections[section].rows.count }
-    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        let h = spec.sections[section].header
-        return h.isEmpty ? nil : h
+    override func numberOfSections(in tableView: UITableView) -> Int { return model.count }
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { return model[section].rows.count }
+
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let h = model[section].header
+        if h.isEmpty { return nil }
+        let v = UIView()
+        let l = UILabel()
+        l.text = h
+        l.font = OenoFont.serif(18 * spec.scale)
+        l.textColor = spec.fg ?? .label
+        l.translatesAutoresizingMaskIntoConstraints = false
+        v.addSubview(l)
+        NSLayoutConstraint.activate([
+            l.leadingAnchor.constraint(equalTo: v.layoutMarginsGuide.leadingAnchor, constant: 4),
+            l.trailingAnchor.constraint(equalTo: v.layoutMarginsGuide.trailingAnchor),
+            l.topAnchor.constraint(equalTo: v.topAnchor, constant: 8),
+            l.bottomAnchor.constraint(equalTo: v.bottomAnchor, constant: -4)
+        ])
+        return v
+    }
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return model[section].header.isEmpty ? 10 : UITableView.automaticDimension
     }
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        let f = spec.sections[section].footer
+        let f = model[section].footer
         return f.isEmpty ? nil : f
+    }
+    override func tableView(_ tableView: UITableView, willDisplayFooterView view: UIView, forSection section: Int) {
+        guard let f = view as? UITableViewHeaderFooterView else { return }
+        var c = f.defaultContentConfiguration()
+        c.text = model[section].footer
+        c.textProperties.font = .systemFont(ofSize: 12.5 * spec.scale)
+        c.textProperties.color = spec.mut ?? .secondaryLabel
+        f.contentConfiguration = c
+    }
+
+    private func label(_ text: String) -> UILabel {
+        let l = UILabel()
+        l.text = text
+        l.font = .systemFont(ofSize: 16 * spec.scale)
+        l.textColor = spec.fg ?? .label
+        l.translatesAutoresizingMaskIntoConstraints = false
+        l.setContentHuggingPriority(.required, for: .horizontal)
+        return l
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt ip: IndexPath) -> UITableViewCell {
-        let r = spec.sections[ip.section].rows[ip.row]
+        let r = model[ip.section].rows[ip.row]
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+        cell.backgroundColor = spec.card
+        cell.tintColor = spec.accent
+        let g = cell.contentView.layoutMarginsGuide
         var c = cell.defaultContentConfiguration()
         c.text = r.title
         c.secondaryText = r.subtitle.isEmpty ? nil : r.subtitle
@@ -563,30 +680,66 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
         c.textProperties.color = spec.fg ?? .label
         c.secondaryTextProperties.font = .systemFont(ofSize: 13 * spec.scale)
         c.secondaryTextProperties.color = spec.mut ?? .secondaryLabel
-        c.textToSecondaryTextVerticalPadding = 3
-        cell.backgroundColor = spec.card
-        cell.tintColor = spec.accent
+        c.textToSecondaryTextVerticalPadding = 2
+        c.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 9, leading: 0, bottom: 9, trailing: 0)
+        let id = r.id
+
         switch r.kind {
-        case "seg":
+        case "segline":
             cell.selectionStyle = .none
+            let name = label(r.title)
             let seg = UISegmentedControl(items: r.options)
             seg.selectedSegmentIndex = r.selected
-            seg.setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 14 * spec.scale, weight: .medium), .foregroundColor: spec.mut ?? UIColor.secondaryLabel], for: .normal)
-            seg.setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 14 * spec.scale, weight: .semibold), .foregroundColor: spec.accent], for: .selected)
             seg.translatesAutoresizingMaskIntoConstraints = false
-            let id = r.id
+            seg.setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 13 * spec.scale, weight: .medium)], for: .normal)
+            seg.setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 13 * spec.scale, weight: .semibold)], for: .selected)
             seg.addAction(UIAction { [weak self] a in
                 guard let sc = a.sender as? UISegmentedControl else { return }
                 UISelectionFeedbackGenerator().selectionChanged()
                 self?.onAction?(id, String(sc.selectedSegmentIndex))
             }, for: .valueChanged)
+            cell.contentView.addSubview(name)
             cell.contentView.addSubview(seg)
             NSLayoutConstraint.activate([
-                seg.leadingAnchor.constraint(equalTo: cell.contentView.layoutMarginsGuide.leadingAnchor),
-                seg.trailingAnchor.constraint(equalTo: cell.contentView.layoutMarginsGuide.trailingAnchor),
-                seg.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 10),
-                seg.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -10),
-                seg.heightAnchor.constraint(greaterThanOrEqualToConstant: 34)
+                name.leadingAnchor.constraint(equalTo: g.leadingAnchor),
+                name.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor),
+                seg.leadingAnchor.constraint(greaterThanOrEqualTo: name.trailingAnchor, constant: 12),
+                seg.trailingAnchor.constraint(equalTo: g.trailingAnchor),
+                seg.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 7),
+                seg.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -7)
+            ])
+            return cell
+        case "menu":
+            cell.selectionStyle = .none
+            let name = label(r.title)
+            var bc = UIButton.Configuration.plain()
+            bc.title = r.selected >= 0 && r.selected < r.options.count ? r.options[r.selected] : ""
+            bc.image = UIImage(systemName: "chevron.up.chevron.down", withConfiguration: UIImage.SymbolConfiguration(pointSize: 11, weight: .semibold))
+            bc.imagePlacement = .trailing
+            bc.imagePadding = 5
+            bc.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 0)
+            bc.baseForegroundColor = spec.mut ?? .secondaryLabel
+            bc.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { [scale = spec.scale] a in
+                var a = a; a.font = UIFont.systemFont(ofSize: 16 * scale); return a
+            }
+            let b = UIButton(configuration: bc)
+            b.translatesAutoresizingMaskIntoConstraints = false
+            b.menu = UIMenu(children: r.options.enumerated().map { (i, o) in
+                UIAction(title: o, state: i == r.selected ? .on : .off) { [weak self] _ in
+                    UISelectionFeedbackGenerator().selectionChanged()
+                    self?.onAction?(id, String(i))
+                }
+            })
+            b.showsMenuAsPrimaryAction = true
+            cell.contentView.addSubview(name)
+            cell.contentView.addSubview(b)
+            NSLayoutConstraint.activate([
+                name.leadingAnchor.constraint(equalTo: g.leadingAnchor),
+                name.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor),
+                b.trailingAnchor.constraint(equalTo: g.trailingAnchor),
+                b.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor),
+                b.leadingAnchor.constraint(greaterThanOrEqualTo: name.trailingAnchor, constant: 12),
+                cell.contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 46)
             ])
             return cell
         case "toggle":
@@ -594,7 +747,6 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
             let sw = UISwitch()
             sw.isOn = r.on
             sw.onTintColor = spec.accent
-            let id = r.id
             sw.addAction(UIAction { [weak self] a in
                 guard let s = a.sender as? UISwitch else { return }
                 self?.onAction?(id, s.isOn ? "1" : "0")
@@ -609,10 +761,11 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
             tf.isSecureTextEntry = true
             tf.autocapitalizationType = .none
             tf.autocorrectionType = .no
-            tf.text = fieldText[r.id]
+            tf.font = .systemFont(ofSize: 16 * spec.scale)
+            tf.text = fieldText[id]
             tf.translatesAutoresizingMaskIntoConstraints = false
             tf.delegate = self
-            tf.accessibilityIdentifier = r.id
+            tf.accessibilityIdentifier = id
             tf.addAction(UIAction { [weak self] a in
                 guard let t = a.sender as? UITextField, let k = t.accessibilityIdentifier else { return }
                 self?.fieldText[k] = t.text ?? ""
@@ -622,21 +775,19 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
             bc.title = r.button
             let b = UIButton(configuration: bc)
             b.translatesAutoresizingMaskIntoConstraints = false
-            let id = r.id
             b.addAction(UIAction { [weak self] _ in
                 self?.view.endEditing(true)
                 self?.onAction?(id, self?.fieldText[id] ?? "")
             }, for: .touchUpInside)
             cell.contentView.addSubview(tf)
             cell.contentView.addSubview(b)
-            let g = cell.contentView.layoutMarginsGuide
             NSLayoutConstraint.activate([
                 tf.leadingAnchor.constraint(equalTo: g.leadingAnchor),
                 tf.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor),
                 b.leadingAnchor.constraint(equalTo: tf.trailingAnchor, constant: 10),
                 b.trailingAnchor.constraint(equalTo: g.trailingAnchor),
-                b.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 8),
-                b.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8)
+                b.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 6),
+                b.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -6)
             ])
             b.setContentHuggingPriority(.required, for: .horizontal)
             b.setContentCompressionResistancePriority(.required, for: .horizontal)
@@ -651,7 +802,7 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
 
     override func tableView(_ tableView: UITableView, didSelectRowAt ip: IndexPath) {
         tableView.deselectRow(at: ip, animated: true)
-        let r = spec.sections[ip.section].rows[ip.row]
+        let r = model[ip.section].rows[ip.row]
         if r.kind == "row" { onAction?(r.id, "") }
     }
 

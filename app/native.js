@@ -113,8 +113,9 @@ import {registerPlugin} from '@capacitor/core';
     actions.push({id:'settings',icon:'ellipsis',img:img('more',MORE),label:'Settings'});
     var sheet=['info','info2','info3'].some(function(i){var e=document.getElementById(i);return e&&e.style.display&&e.style.display!=='none'});
     var hidden=nav.classList.contains('hide')||document.body.classList.contains('kbd')||sheet;
-    var accent=hex(getComputedStyle(html).getPropertyValue('--acc'));
-    var spec=JSON.stringify({mode:m,hidden:hidden,active:active,tabs:tabs,actions:actions,search:false,top:!!(document.getElementById('fbtt')&&document.getElementById('fbtt').classList.contains('on')),accent:accent});
+    var accent=settled(function(){return hex(getComputedStyle(html).getPropertyValue('--acc'))});
+    var theme=(typeof PF!=='undefined'&&PF.theme)||'auto';
+    var spec=JSON.stringify({mode:m,theme:theme,hidden:hidden,active:active,tabs:tabs,actions:actions,search:false,top:!!(document.getElementById('fbtt')&&document.getElementById('fbtt').classList.contains('on')),accent:accent});
     if(failed||spec===last)return;
     last=spec;
     GlassBar.update({spec:spec}).then(function(r){
@@ -147,7 +148,9 @@ import {registerPlugin} from '@capacitor/core';
     if(i<0&&seg.dataset.k==='lang'){var l=(typeof PF!=='undefined'&&PF.lang)||(html.lang||'en').slice(0,2);i=Array.prototype.findIndex.call(bs,function(b){return b.dataset.v===l});if(i<0)i=0}
     return i;
   }
-  function cols(){var cs=getComputedStyle(document.body),o={};['paper','card','fg','mut'].forEach(function(k){var v=cs.getPropertyValue('--'+k).trim();if(v)o[k]=hex(v)});return o}
+  // The page fades its colours over 0.6s when the theme changes; read the end colours, not a mid-fade value.
+  function settled(f){var t=html.style.transition;html.style.transition='none';void html.offsetWidth;try{return f()}finally{html.style.transition=t}}
+  function cols(){return settled(function(){var cs=getComputedStyle(document.body),o={};['paper','card','fg','mut'].forEach(function(k){var v=cs.getPropertyValue('--'+k).trim();if(v)o[k]=hex(v)});o.acc=hex(getComputedStyle(html).getPropertyValue('--acc'));return o})}
   function settingsSpec(bd){
     REFS=[];var secs=[],cur=null,title='Settings',sub='';
     function sec(h){cur={header:h||'',footer:'',rows:[]};secs.push(cur);return cur}
@@ -165,7 +168,8 @@ import {registerPlugin} from '@capacitor/core';
       if(e.classList.contains('m')){var cl=e.cloneNode(true);Array.prototype.forEach.call(cl.querySelectorAll('br'),function(b){b.replaceWith('\n')});var t=cl.textContent.split('\n').map(function(x){return x.replace(/\s+/g,' ').trim()}).join('\n');cur.footer=(cur.footer?cur.footer+'\n':'')+t.trim();return}
     });
     secs=secs.filter(function(x){return x.rows.length||x.footer});
-    return {title:title,subtitle:sub,sections:secs,theme:(typeof PF!=='undefined'&&PF.theme)||'auto',ts:(typeof PF!=='undefined'&&+PF.ts)||1,accent:hex(getComputedStyle(html).getPropertyValue('--acc')),colors:cols()};
+    var c=cols();
+    return {title:title,subtitle:sub,sections:secs,theme:(typeof PF!=='undefined'&&PF.theme)||'auto',ts:(typeof PF!=='undefined'&&+PF.ts)||1,accent:c.acc,colors:c};
   }
   function syncSettings(){
     if(failed)return;
@@ -189,7 +193,7 @@ import {registerPlugin} from '@capacitor/core';
     else if(el.id==='okey'){var i=el.querySelector('input'),k=el.querySelector('button');if(i)i.value=v;if(k)k.click()}
     else if(/#csv/.test(el.getAttribute('onclick')||'')){if(window.closeInfo)window.closeInfo();setTimeout(function(){var f=document.getElementById('csv');if(f)f.click()},450)}
     else el.click();
-    setTimeout(syncSettings,60);
+    setTimeout(syncSettings,60);setTimeout(syncSettings,320);soon();
   });
   function start(){
     new MutationObserver(soon).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
