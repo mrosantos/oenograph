@@ -10,10 +10,40 @@ public class GlassBarPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "GlassBarPlugin"
     public let jsName = "GlassBar"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "update", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "update", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "settings", returnType: CAPPluginReturnPromise)
     ]
 
     private var overlay: GlassOverlay?
+    private var sheet: SettingsSheet?
+
+    // Shows (or updates, or closes when the spec is empty) the native Settings card.
+    @objc func settings(_ call: CAPPluginCall) {
+        let json = call.getString("spec") ?? ""
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            let spec = SheetSpec(json: json)
+            if spec == nil {
+                if let sh = self.sheet { sh.closedByPage = true; sh.dismiss(animated: true) }
+                self.sheet = nil
+                call.resolve(); return
+            }
+            if let sh = self.sheet, sh.presentingViewController != nil {
+                sh.apply(spec!)
+            } else {
+                guard let vc = self.bridge?.viewController else { call.resolve(); return }
+                let sh = SettingsSheet(spec: spec!)
+                sh.onAction = { [weak self] id, value in self?.notifyListeners("settings", data: ["id": id, "value": value]) }
+                sh.onClose = { [weak self] in self?.sheet = nil; self?.notifyListeners("settings", data: ["id": "close", "value": ""]) }
+                let nav = UINavigationController(rootViewController: sh)
+                if let p = nav.sheetPresentationController { p.detents = [.large()]; p.prefersGrabberVisible = true }
+                nav.presentationController?.delegate = sh
+                vc.present(nav, animated: true)
+                self.sheet = sh
+            }
+            call.resolve()
+        }
+    }
 
     @objc func update(_ call: CAPPluginCall) {
         let json = call.getString("spec") ?? "{}"
@@ -306,5 +336,223 @@ final class GlassOverlay: UIView {
             topButton.bounds = CGRect(x: 0, y: 0, width: 50, height: 50)
             topButton.center = CGPoint(x: W - side - 25, y: y - 12 - 25)
         }
+    }
+}
+
+// MARK: - Native Settings card
+// The page describes the card (sections of pickers, switches and rows); iOS draws it, so it gets real
+// Liquid Glass and follows the system Clear / Tinted setting. Taps go back to the page as "settings" events.
+
+struct SheetRow {
+    var kind = "row"        // "seg", "toggle", "row", "info", "field"
+    var id = ""
+    var title = ""
+    var subtitle = ""
+    var options: [String] = []
+    var selected = -1
+    var on = false
+    var danger = false
+    var placeholder = ""
+    var button = ""
+}
+
+struct SheetSection {
+    var header = ""
+    var footer = ""
+    var rows: [SheetRow] = []
+}
+
+struct SheetSpec {
+    var title = "Settings"
+    var subtitle = ""
+    var sections: [SheetSection] = []
+    var theme = "auto"
+    var accent: UIColor = .systemPink
+
+    init?(json: String) {
+        guard !json.isEmpty, let data = json.data(using: .utf8),
+              let o = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return nil }
+        title = o["title"] as? String ?? "Settings"
+        subtitle = o["subtitle"] as? String ?? ""
+        theme = o["theme"] as? String ?? "auto"
+        if let hex = o["accent"] as? String, let c = UIColor(hex: hex) { accent = c }
+        sections = (o["sections"] as? [[String: Any]] ?? []).map { sd in
+            var sec = SheetSection()
+            sec.header = sd["header"] as? String ?? ""
+            sec.footer = sd["footer"] as? String ?? ""
+            sec.rows = (sd["rows"] as? [[String: Any]] ?? []).map { rd in
+                var r = SheetRow()
+                r.kind = rd["kind"] as? String ?? "row"
+                r.id = rd["id"] as? String ?? ""
+                r.title = rd["title"] as? String ?? ""
+                r.subtitle = rd["subtitle"] as? String ?? ""
+                r.options = rd["options"] as? [String] ?? []
+                r.selected = rd["selected"] as? Int ?? -1
+                r.on = rd["on"] as? Bool ?? false
+                r.danger = rd["danger"] as? Bool ?? false
+                r.placeholder = rd["placeholder"] as? String ?? ""
+                r.button = rd["button"] as? String ?? ""
+                return r
+            }
+            return sec
+        }
+    }
+}
+
+final class SettingsSheet: UITableViewController, UIAdaptivePresentationControllerDelegate, UITextFieldDelegate {
+    var spec: SheetSpec
+    var onAction: ((String, String) -> Void)?
+    var onClose: (() -> Void)?
+    var closedByPage = false
+    private var notified = false
+    private func notifyClose() {
+        if notified || closedByPage { return }
+        notified = true
+        onClose?()
+    }
+    private var fieldText: [String: String] = [:]
+
+    init(spec: SheetSpec) {
+        self.spec = spec
+        super.init(style: .insetGrouped)
+    }
+    required init?(coder: NSCoder) { fatalError("not used") }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        navigationItem.largeTitleDisplayMode = .always
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.rightBarButtonItem = UIBarButtonItem(systemItem: .close, primaryAction: UIAction { [weak self] _ in self?.dismiss(animated: true) })
+        tableView.keyboardDismissMode = .interactive
+        apply(spec)
+    }
+
+    func apply(_ s: SheetSpec) {
+        spec = s
+        title = s.title
+        if #available(iOS 26.0, *) { navigationItem.subtitle = s.subtitle.isEmpty ? nil : s.subtitle }
+        let style: UIUserInterfaceStyle = s.theme == "dark" ? .dark : s.theme == "light" ? .light : .unspecified
+        navigationController?.overrideUserInterfaceStyle = style
+        view.tintColor = s.accent
+        navigationController?.view.tintColor = s.accent
+        if isViewLoaded { tableView.reloadData() }
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if navigationController?.isBeingDismissed ?? isBeingDismissed { notifyClose() }
+    }
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        notifyClose()
+    }
+
+    override func numberOfSections(in tableView: UITableView) -> Int { return spec.sections.count }
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { return spec.sections[section].rows.count }
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        let h = spec.sections[section].header
+        return h.isEmpty ? nil : h
+    }
+    override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        let f = spec.sections[section].footer
+        return f.isEmpty ? nil : f
+    }
+
+    override func tableView(_ tableView: UITableView, cellForRowAt ip: IndexPath) -> UITableViewCell {
+        let r = spec.sections[ip.section].rows[ip.row]
+        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+        var c = cell.defaultContentConfiguration()
+        c.text = r.title
+        c.secondaryText = r.subtitle.isEmpty ? nil : r.subtitle
+        c.secondaryTextProperties.color = .secondaryLabel
+        switch r.kind {
+        case "seg":
+            cell.selectionStyle = .none
+            let seg = UISegmentedControl(items: r.options)
+            seg.selectedSegmentIndex = r.selected
+            seg.translatesAutoresizingMaskIntoConstraints = false
+            let id = r.id
+            seg.addAction(UIAction { [weak self] a in
+                guard let sc = a.sender as? UISegmentedControl else { return }
+                UISelectionFeedbackGenerator().selectionChanged()
+                self?.onAction?(id, String(sc.selectedSegmentIndex))
+            }, for: .valueChanged)
+            cell.contentView.addSubview(seg)
+            NSLayoutConstraint.activate([
+                seg.leadingAnchor.constraint(equalTo: cell.contentView.layoutMarginsGuide.leadingAnchor),
+                seg.trailingAnchor.constraint(equalTo: cell.contentView.layoutMarginsGuide.trailingAnchor),
+                seg.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 10),
+                seg.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -10),
+                seg.heightAnchor.constraint(greaterThanOrEqualToConstant: 34)
+            ])
+            return cell
+        case "toggle":
+            cell.selectionStyle = .none
+            let sw = UISwitch()
+            sw.isOn = r.on
+            let id = r.id
+            sw.addAction(UIAction { [weak self] a in
+                guard let s = a.sender as? UISwitch else { return }
+                self?.onAction?(id, s.isOn ? "1" : "0")
+            }, for: .valueChanged)
+            cell.accessoryView = sw
+        case "info":
+            cell.selectionStyle = .none
+        case "field":
+            cell.selectionStyle = .none
+            let tf = UITextField()
+            tf.placeholder = r.placeholder
+            tf.isSecureTextEntry = true
+            tf.autocapitalizationType = .none
+            tf.autocorrectionType = .no
+            tf.text = fieldText[r.id]
+            tf.translatesAutoresizingMaskIntoConstraints = false
+            tf.delegate = self
+            tf.accessibilityIdentifier = r.id
+            tf.addAction(UIAction { [weak self] a in
+                guard let t = a.sender as? UITextField, let k = t.accessibilityIdentifier else { return }
+                self?.fieldText[k] = t.text ?? ""
+            }, for: .editingChanged)
+            var bc: UIButton.Configuration
+            if #available(iOS 26.0, *) { bc = .glass() } else { bc = .tinted() }
+            bc.title = r.button
+            let b = UIButton(configuration: bc)
+            b.translatesAutoresizingMaskIntoConstraints = false
+            let id = r.id
+            b.addAction(UIAction { [weak self] _ in
+                self?.view.endEditing(true)
+                self?.onAction?(id, self?.fieldText[id] ?? "")
+            }, for: .touchUpInside)
+            cell.contentView.addSubview(tf)
+            cell.contentView.addSubview(b)
+            let g = cell.contentView.layoutMarginsGuide
+            NSLayoutConstraint.activate([
+                tf.leadingAnchor.constraint(equalTo: g.leadingAnchor),
+                tf.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor),
+                b.leadingAnchor.constraint(equalTo: tf.trailingAnchor, constant: 10),
+                b.trailingAnchor.constraint(equalTo: g.trailingAnchor),
+                b.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 8),
+                b.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8)
+            ])
+            b.setContentHuggingPriority(.required, for: .horizontal)
+            b.setContentCompressionResistancePriority(.required, for: .horizontal)
+            return cell
+        default:
+            c.textProperties.color = r.danger ? .systemRed : .label
+            cell.accessoryType = r.danger ? .none : .disclosureIndicator
+        }
+        cell.contentConfiguration = c
+        return cell
+    }
+
+    override func tableView(_ tableView: UITableView, didSelectRowAt ip: IndexPath) {
+        tableView.deselectRow(at: ip, animated: true)
+        let r = spec.sections[ip.section].rows[ip.row]
+        if r.kind == "row" { onAction?(r.id, "") }
+    }
+
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        if let k = textField.accessibilityIdentifier { onAction?(k, fieldText[k] ?? "") }
+        return true
     }
 }

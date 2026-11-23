@@ -59,6 +59,8 @@ import {registerPlugin} from '@capacitor/core';
   var ICON={cellar:'waterbottle',drink:'wineglass',log:'list.bullet.rectangle',map:'safari'};
   var upright=matchMedia('(max-width:600px) and (orientation:portrait)');
   function mode(){return html.classList.contains('duo-rail')?'duo':upright.matches?'bottom':'off'}
+  // Colours for iOS as #rrggbb (the page may give rgb(...)).
+  function hex(c){c=(c||'').trim();var m=/rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/.exec(c);if(!m)return c;return '#'+[m[1],m[2],m[3]].map(function(n){return ('0'+(+n).toString(16)).slice(-2)}).join('')}
   function tabsOf(){var n=document.querySelector('nav');return n?Array.prototype.slice.call(n.querySelectorAll(':scope > button[data-t]')):[]}
   // The page's own top buttons, found by what they do (their labels change with the language).
   var DO={'Add wine':'newW()','Search':'openSearch()','Settings':'openSettings()'};
@@ -111,7 +113,7 @@ import {registerPlugin} from '@capacitor/core';
     actions.push({id:'settings',icon:'ellipsis',img:img('more',MORE),label:'Settings'});
     var sheet=['info','info2','info3'].some(function(i){var e=document.getElementById(i);return e&&e.style.display&&e.style.display!=='none'});
     var hidden=nav.classList.contains('hide')||document.body.classList.contains('kbd')||sheet;
-    var accent=getComputedStyle(html).getPropertyValue('--acc').trim();
+    var accent=hex(getComputedStyle(html).getPropertyValue('--acc'));
     var spec=JSON.stringify({mode:m,hidden:hidden,active:active,tabs:tabs,actions:actions,search:false,top:!!(document.getElementById('fbtt')&&document.getElementById('fbtt').classList.contains('on')),accent:accent});
     if(failed||spec===last)return;
     last=spec;
@@ -134,9 +136,64 @@ import {registerPlugin} from '@capacitor/core';
     else if(id==='settings'){var t=top('Settings');if(t)t.click();else if(window.openSettings)window.openSettings()}
     soon();
   });
+  // ---- Native Settings card ----
+  // The page still builds its Settings card (so every option, language and rule stays the same);
+  // it is kept invisible, read here, and shown by iOS instead. Taps press the page's own controls.
+  var REFS=[],setOn=false,lastSet='',setT=0;
+  function txt(e){return e?e.textContent.replace(/\s+/g,' ').trim():''}
+  function own(span){return span?Array.prototype.filter.call(span.childNodes,function(n){return !(n.classList&&n.classList.contains('m'))}).map(function(n){return n.textContent}).join('').replace(/\s+/g,' ').trim():''}
+  function selOf(seg,bs){
+    var i=Array.prototype.findIndex.call(bs,function(b){return b.classList.contains('on')});
+    if(i<0&&seg.dataset.k==='lang'){var l=(typeof PF!=='undefined'&&PF.lang)||(html.lang||'en').slice(0,2);i=Array.prototype.findIndex.call(bs,function(b){return b.dataset.v===l});if(i<0)i=0}
+    return i;
+  }
+  function settingsSpec(bd){
+    REFS=[];var secs=[],cur=null,title='Settings',sub='';
+    function sec(h){cur={header:h||'',footer:'',rows:[]};secs.push(cur);return cur}
+    function ref(e){REFS.push(e);return String(REFS.length-1)}
+    Array.prototype.forEach.call(bd.children,function(e){
+      if(e.classList.contains('ttl')){title=txt(e);return}
+      if(e.classList.contains('sub')&&!cur){sub=txt(e);return}
+      if(e.tagName==='H2'){sec(txt(e));return}
+      if(!cur)sec('');
+      if(e.classList.contains('seg')){var bs=e.querySelectorAll('button');cur.rows.push({kind:'seg',id:ref(e),options:Array.prototype.map.call(bs,txt),selected:selOf(e,bs)});return}
+      if(e.tagName==='LABEL'&&e.querySelector('input[type=checkbox]')){var sp=e.querySelector('span');cur.rows.push({kind:'toggle',id:ref(e.querySelector('input')),title:own(sp),subtitle:txt(sp&&sp.querySelector('.m')),on:e.querySelector('input').checked});return}
+      if(e.classList.contains('srow')){var s1=e.querySelector('span');var info=e.style.cursor==='default'||!e.getAttribute('onclick');cur.rows.push({kind:info?'info':'row',id:ref(e),title:own(s1),subtitle:txt(s1&&s1.querySelector('.m')),danger:e.classList.contains('dng')});return}
+      if(e.classList.contains('okl')){cur.rows.push({kind:'row',id:ref(e),title:txt(e)});return}
+      if(e.id==='okey'){if(e.hidden)return;var m=e.querySelector('.m'),inp=e.querySelector('input'),b=e.querySelector('button');cur.footer=txt(m);cur.rows.push({kind:'field',id:ref(e),placeholder:inp?inp.placeholder:'',button:txt(b)});return}
+      if(e.classList.contains('m')){var cl=e.cloneNode(true);Array.prototype.forEach.call(cl.querySelectorAll('br'),function(b){b.replaceWith('\n')});var t=cl.textContent.split('\n').map(function(x){return x.replace(/\s+/g,' ').trim()}).join('\n');cur.footer=(cur.footer?cur.footer+'\n':'')+t.trim();return}
+    });
+    secs=secs.filter(function(x){return x.rows.length||x.footer});
+    return {title:title,subtitle:sub,sections:secs,theme:(typeof PF!=='undefined'&&PF.theme)||'auto',accent:hex(getComputedStyle(html).getPropertyValue('--acc'))};
+  }
+  function syncSettings(){
+    if(failed)return;
+    var I=document.getElementById('info'),open=I&&I.style.display==='block'&&I.classList.contains('setw');
+    var bd=open&&I.querySelector('.ibody');
+    if(open&&bd&&bd.children.length){
+      html.classList.add('native-settings');
+      var spec=JSON.stringify(settingsSpec(bd));
+      if(spec!==lastSet||!setOn){lastSet=spec;setOn=true;GlassBar.settings({spec:spec}).catch(function(){})}
+    }else if(setOn){
+      setOn=false;lastSet='';html.classList.remove('native-settings');
+      GlassBar.settings({spec:''}).catch(function(){});
+    }
+  }
+  GlassBar.addListener('settings',function(e){
+    var id=e&&e.id,v=e&&e.value;
+    if(id==='close'){setOn=false;lastSet='';html.classList.remove('native-settings');if(typeof window.closeInfo==='function')window.closeInfo();return}
+    var el=REFS[+id];if(!el)return;
+    if(el.classList&&el.classList.contains('seg')){var b=el.querySelectorAll('button')[+v];if(b)b.click()}
+    else if(el.tagName==='INPUT'){el.checked=v==='1';el.dispatchEvent(new Event('change',{bubbles:true}))}
+    else if(el.id==='okey'){var i=el.querySelector('input'),k=el.querySelector('button');if(i)i.value=v;if(k)k.click()}
+    else if(/#csv/.test(el.getAttribute('onclick')||'')){if(window.closeInfo)window.closeInfo();setTimeout(function(){var f=document.getElementById('csv');if(f)f.click()},450)}
+    else el.click();
+    setTimeout(syncSettings,60);
+  });
   function start(){
     new MutationObserver(soon).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
-    ['info','info2','info3'].forEach(function(i){var e=document.getElementById(i);if(e)new MutationObserver(soon).observe(e,{attributes:true,attributeFilter:['style']})});
+    ['info','info2','info3'].forEach(function(i){var e=document.getElementById(i);if(e)new MutationObserver(soon).observe(e,{attributes:true,attributeFilter:['style','class']})});
+    var I=document.getElementById('info');if(I)new MutationObserver(function(){clearTimeout(setT);setT=setTimeout(syncSettings,30)}).observe(I,{attributes:true,attributeFilter:['style','class'],childList:true,subtree:true,characterData:true});
     addEventListener('resize',soon);
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change',soon);
     send();

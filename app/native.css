@@ -50,3 +50,5 @@ html.duo-rail.native-glass .sw .act,html.duo-rail.native-glass .sw .pd{right:46p
 html.duo-rail.native-glass .sw .pd{border-radius:16px}
 /* Cards (Settings, wine info…) start just below the camera on the closed Duo */
 html.duo-rail :is(#info,#info2,#info3) .ic{top:112px}
+/* While iOS shows the Settings card, the page's own copy stays invisible underneath */
+html.native-glass #info.setw{visibility:hidden!important;pointer-events:none!important}
