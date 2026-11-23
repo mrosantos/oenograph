@@ -147,6 +147,7 @@ import {registerPlugin} from '@capacitor/core';
     if(i<0&&seg.dataset.k==='lang'){var l=(typeof PF!=='undefined'&&PF.lang)||(html.lang||'en').slice(0,2);i=Array.prototype.findIndex.call(bs,function(b){return b.dataset.v===l});if(i<0)i=0}
     return i;
   }
+  function cols(){var cs=getComputedStyle(document.body),o={};['paper','card','fg','mut'].forEach(function(k){var v=cs.getPropertyValue('--'+k).trim();if(v)o[k]=hex(v)});return o}
   function settingsSpec(bd){
     REFS=[];var secs=[],cur=null,title='Settings',sub='';
     function sec(h){cur={header:h||'',footer:'',rows:[]};secs.push(cur);return cur}
@@ -164,7 +165,7 @@ import {registerPlugin} from '@capacitor/core';
       if(e.classList.contains('m')){var cl=e.cloneNode(true);Array.prototype.forEach.call(cl.querySelectorAll('br'),function(b){b.replaceWith('\n')});var t=cl.textContent.split('\n').map(function(x){return x.replace(/\s+/g,' ').trim()}).join('\n');cur.footer=(cur.footer?cur.footer+'\n':'')+t.trim();return}
     });
     secs=secs.filter(function(x){return x.rows.length||x.footer});
-    return {title:title,subtitle:sub,sections:secs,theme:(typeof PF!=='undefined'&&PF.theme)||'auto',accent:hex(getComputedStyle(html).getPropertyValue('--acc'))};
+    return {title:title,subtitle:sub,sections:secs,theme:(typeof PF!=='undefined'&&PF.theme)||'auto',ts:(typeof PF!=='undefined'&&+PF.ts)||1,accent:hex(getComputedStyle(html).getPropertyValue('--acc')),colors:cols()};
   }
   function syncSettings(){
     if(failed)return;

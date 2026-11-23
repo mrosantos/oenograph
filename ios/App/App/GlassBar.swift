@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import CoreText
 
 // Real iOS Liquid Glass for œnograph's menu and round buttons.
 // The web page describes what to show (GlassBar.update); taps go back to the page as "tap" events.
@@ -368,6 +369,11 @@ struct SheetSpec {
     var sections: [SheetSection] = []
     var theme = "auto"
     var accent: UIColor = .systemPink
+    var scale: CGFloat = 1          // the app's Text size setting
+    var paper: UIColor?
+    var card: UIColor?
+    var fg: UIColor?
+    var mut: UIColor?
 
     init?(json: String) {
         guard !json.isEmpty, let data = json.data(using: .utf8),
@@ -376,6 +382,12 @@ struct SheetSpec {
         subtitle = o["subtitle"] as? String ?? ""
         theme = o["theme"] as? String ?? "auto"
         if let hex = o["accent"] as? String, let c = UIColor(hex: hex) { accent = c }
+        if let t = o["ts"] as? Double, t > 0.5, t < 2 { scale = CGFloat(t) }
+        let col = o["colors"] as? [String: String] ?? [:]
+        paper = col["paper"].flatMap { UIColor(hex: $0) }
+        card = col["card"].flatMap { UIColor(hex: $0) }
+        fg = col["fg"].flatMap { UIColor(hex: $0) }
+        mut = col["mut"].flatMap { UIColor(hex: $0) }
         sections = (o["sections"] as? [[String: Any]] ?? []).map { sd in
             var sec = SheetSection()
             sec.header = sd["header"] as? String ?? ""
@@ -397,6 +409,20 @@ struct SheetSpec {
             return sec
         }
     }
+}
+
+// œnograph's own typefaces (shipped as .ttf next to the web copy), registered once.
+enum OenoFont {
+    static let registered: Bool = {
+        for n in ["italiana", "ebgaramond-500"] {
+            if let u = Bundle.main.url(forResource: n, withExtension: "ttf", subdirectory: "public/native-fonts") {
+                CTFontManagerRegisterFontsForURL(u as CFURL, .process, nil)
+            }
+        }
+        return true
+    }()
+    static func display(_ size: CGFloat) -> UIFont { _ = registered; return UIFont(name: "Italiana-Regular", size: size) ?? .systemFont(ofSize: size, weight: .light) }
+    static func serif(_ size: CGFloat) -> UIFont { _ = registered; return UIFont(name: "EBGaramond-Medium", size: size) ?? .systemFont(ofSize: size, weight: .medium) }
 }
 
 final class SettingsSheet: UITableViewController, UIAdaptivePresentationControllerDelegate, UITextFieldDelegate {
@@ -424,18 +450,88 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.rightBarButtonItem = UIBarButtonItem(systemItem: .close, primaryAction: UIAction { [weak self] _ in self?.dismiss(animated: true) })
         tableView.keyboardDismissMode = .interactive
-        apply(spec)
+        tableView.sectionHeaderTopPadding = 6
+        style()
+        tableView.backgroundColor = spec.paper ?? .systemGroupedBackground
+    }
+
+    // Same layout as before: refresh only the rows that changed, and leave a switch or picker the
+    // person just moved alone so its own animation can finish.
+    private func sameShape(_ a: SheetSpec, _ b: SheetSpec) -> Bool {
+        guard a.sections.count == b.sections.count, a.scale == b.scale, a.theme == b.theme else { return false }
+        for (x, y) in zip(a.sections, b.sections) {
+            if x.rows.count != y.rows.count || x.header != y.header || x.footer != y.footer { return false }
+            for (p, q) in zip(x.rows, y.rows) where p.kind != q.kind || p.id != q.id { return false }
+        }
+        return true
     }
 
     func apply(_ s: SheetSpec) {
+        let old = spec
         spec = s
+        style()
+        guard isViewLoaded else { return }
+        if sameShape(old, s) {
+            var changed: [IndexPath] = []
+            for (si, sec) in s.sections.enumerated() {
+                for (ri, row) in sec.rows.enumerated() {
+                    let o = old.sections[si].rows[ri]
+                    if row.kind == "toggle" || row.kind == "seg" || row.kind == "field" { continue }
+                    if o.title != row.title || o.subtitle != row.subtitle || o.danger != row.danger { changed.append(IndexPath(row: ri, section: si)) }
+                }
+            }
+            if !changed.isEmpty { tableView.reloadRows(at: changed, with: .none) }
+        } else {
+            tableView.reloadData()
+        }
+    }
+
+    private func style() {
+        let s = spec
         title = s.title
         if #available(iOS 26.0, *) { navigationItem.subtitle = s.subtitle.isEmpty ? nil : s.subtitle }
         let style: UIUserInterfaceStyle = s.theme == "dark" ? .dark : s.theme == "light" ? .light : .unspecified
         navigationController?.overrideUserInterfaceStyle = style
         view.tintColor = s.accent
         navigationController?.view.tintColor = s.accent
-        if isViewLoaded { tableView.reloadData() }
+        let fg = s.fg ?? .label
+        if let nb = navigationController?.navigationBar {
+            nb.largeTitleTextAttributes = [.font: OenoFont.display(38 * s.scale), .foregroundColor: fg]
+            nb.titleTextAttributes = [.font: OenoFont.display(22 * s.scale), .foregroundColor: fg]
+        }
+        if isViewLoaded {
+            tableView.backgroundColor = s.paper ?? .systemGroupedBackground
+            navigationController?.view.backgroundColor = s.paper
+        }
+    }
+
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let h = spec.sections[section].header
+        if h.isEmpty { return nil }
+        let v = UIView()
+        let l = UILabel()
+        l.text = h
+        l.font = OenoFont.serif(19 * spec.scale)
+        l.textColor = spec.fg ?? .label
+        l.adjustsFontForContentSizeCategory = false
+        l.translatesAutoresizingMaskIntoConstraints = false
+        v.addSubview(l)
+        NSLayoutConstraint.activate([
+            l.leadingAnchor.constraint(equalTo: v.layoutMarginsGuide.leadingAnchor, constant: 4),
+            l.trailingAnchor.constraint(equalTo: v.layoutMarginsGuide.trailingAnchor),
+            l.topAnchor.constraint(equalTo: v.topAnchor, constant: 14),
+            l.bottomAnchor.constraint(equalTo: v.bottomAnchor, constant: -6)
+        ])
+        return v
+    }
+
+    override func tableView(_ tableView: UITableView, willDisplayFooterView view: UIView, forSection section: Int) {
+        guard let f = view as? UITableViewHeaderFooterView else { return }
+        var c = f.defaultContentConfiguration()
+        c.text = spec.sections[section].footer
+        c.textProperties.font = .systemFont(ofSize: 13 * spec.scale)
+        c.textProperties.color = spec.mut ?? .secondaryLabel
+        f.contentConfiguration = c
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -463,12 +559,20 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
         var c = cell.defaultContentConfiguration()
         c.text = r.title
         c.secondaryText = r.subtitle.isEmpty ? nil : r.subtitle
-        c.secondaryTextProperties.color = .secondaryLabel
+        c.textProperties.font = .systemFont(ofSize: 16 * spec.scale)
+        c.textProperties.color = spec.fg ?? .label
+        c.secondaryTextProperties.font = .systemFont(ofSize: 13 * spec.scale)
+        c.secondaryTextProperties.color = spec.mut ?? .secondaryLabel
+        c.textToSecondaryTextVerticalPadding = 3
+        cell.backgroundColor = spec.card
+        cell.tintColor = spec.accent
         switch r.kind {
         case "seg":
             cell.selectionStyle = .none
             let seg = UISegmentedControl(items: r.options)
             seg.selectedSegmentIndex = r.selected
+            seg.setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 14 * spec.scale, weight: .medium), .foregroundColor: spec.mut ?? UIColor.secondaryLabel], for: .normal)
+            seg.setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 14 * spec.scale, weight: .semibold), .foregroundColor: spec.accent], for: .selected)
             seg.translatesAutoresizingMaskIntoConstraints = false
             let id = r.id
             seg.addAction(UIAction { [weak self] a in
@@ -489,6 +593,7 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
             cell.selectionStyle = .none
             let sw = UISwitch()
             sw.isOn = r.on
+            sw.onTintColor = spec.accent
             let id = r.id
             sw.addAction(UIAction { [weak self] a in
                 guard let s = a.sender as? UISwitch else { return }
@@ -537,7 +642,7 @@ final class SettingsSheet: UITableViewController, UIAdaptivePresentationControll
             b.setContentCompressionResistancePriority(.required, for: .horizontal)
             return cell
         default:
-            c.textProperties.color = r.danger ? .systemRed : .label
+            c.textProperties.color = r.danger ? .systemRed : (spec.fg ?? .label)
             cell.accessoryType = r.danger ? .none : .disclosureIndicator
         }
         cell.contentConfiguration = c
