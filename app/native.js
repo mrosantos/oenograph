@@ -60,7 +60,9 @@ import {registerPlugin} from '@capacitor/core';
   var upright=matchMedia('(max-width:600px) and (orientation:portrait)');
   function mode(){return html.classList.contains('duo-rail')?'duo':upright.matches?'bottom':'off'}
   function tabsOf(){var n=document.querySelector('nav');return n?Array.prototype.slice.call(n.querySelectorAll(':scope > button[data-t]')):[]}
-  function top(l){return document.querySelector('.top .plus[aria-label="'+l+'"]')}
+  // The page's own top buttons, found by what they do (their labels change with the language).
+  var DO={'Add wine':'newW()','Search':'openSearch()','Settings':'openSettings()'};
+  function top(l){return document.querySelector('.top .plus[onclick="'+DO[l]+'"]')}
   var last='',queued=false,failed=false;
   // The app's own line icons, drawn as pictures so the glass menu matches the rest of œnograph.
   var IMG={},pending={};
@@ -107,7 +109,8 @@ import {registerPlugin} from '@capacitor/core';
     actions.push({id:'add',icon:'plus',img:img('add',topSvg('Add wine')),label:'Add wine'});
     actions.push({id:'search',icon:'magnifyingglass',img:img('search',topSvg('Search')),label:'Search'});
     actions.push({id:'settings',icon:'ellipsis',img:img('more',MORE),label:'Settings'});
-    var hidden=nav.classList.contains('hide')||document.body.classList.contains('kbd');
+    var sheet=['info','info2','info3'].some(function(i){var e=document.getElementById(i);return e&&e.style.display&&e.style.display!=='none'});
+    var hidden=nav.classList.contains('hide')||document.body.classList.contains('kbd')||sheet;
     var accent=getComputedStyle(html).getPropertyValue('--acc').trim();
     var spec=JSON.stringify({mode:m,hidden:hidden,active:active,tabs:tabs,actions:actions,search:false,top:!!(document.getElementById('fbtt')&&document.getElementById('fbtt').classList.contains('on')),accent:accent});
     if(failed||spec===last)return;
@@ -133,6 +136,7 @@ import {registerPlugin} from '@capacitor/core';
   });
   function start(){
     new MutationObserver(soon).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+    ['info','info2','info3'].forEach(function(i){var e=document.getElementById(i);if(e)new MutationObserver(soon).observe(e,{attributes:true,attributeFilter:['style']})});
     addEventListener('resize',soon);
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change',soon);
     send();
